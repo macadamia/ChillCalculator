@@ -1,0 +1,10 @@
+*.rds
+*.RData
+*.jpg
+*.dcf
+*.Rproj
+/rsconnect/*
+*.js
+/Data/*
+
+.Rproj.user
