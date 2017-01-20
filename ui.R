@@ -14,7 +14,7 @@ shinyUI(
 
     tags$head(includeScript("google_analytics.js")),
 
-    titlePanel("Phenology Calculator"),
+    titlePanel(""),
 
     # Generate a row with a sidebar
     sidebarLayout(
