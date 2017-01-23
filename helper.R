@@ -86,6 +86,7 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,inputcType){
     chill<-ch$Chill_Units[these]
     units<-'Utah Chill Units'
   }
+
   maxChill<-round(max(chill),1)
 
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
@@ -130,7 +131,7 @@ calcLT <- function(tab.1,lat,sJDay){ # long-Term data
   return(ch)
 }
 
-doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
+doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTJDAY,HQ){
   cat('doThePlot from helper.R',YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ,'\n')
   if(HQ == 3){
     #Screen plot
@@ -150,20 +151,18 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
   }
 
   Year <- as.numeric(YEAR)
+  sJDay<-STARTJDAY
   if(CHILLTYPE == 1){
     YLAB='Chill Portions'
-    sJDay<-1
     eJDay<-366
   }
   if(CHILLTYPE == 2){
     YLAB='Chill Hours'
-    sJDay<-1
     eJDay<-366
   }
   if(CHILLTYPE == 3){
     YLAB='Chill Units'
-    sJDay<-as.numeric(format(as.Date(paste('01-05',Year,sep='-'),'%d-%m-%Y'),'%j'))
-    eJDay<-as.numeric(format(as.Date(paste('31-08',Year,sep='-'),'%d-%m-%Y'),'%j'))
+    eJDay<- 366 #as.numeric(format(as.Date(paste('31-08',YEAR,sep='-'),'%d-%m-%Y'),'%j'))
     print(eJDay)
   }
 
@@ -190,6 +189,19 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
     chill <- chill[hour24]
 
   }
+  if(CHILLTYPE != 3){
+    if(sum(chill) <= 0){
+      aTitle <- paste("No Chill Accumulation Yet at",stnName)
+      plot(0,0,type='n',axes=F,xlab='',ylab='',main=aTitle)
+      return(NULL)
+    }
+  } else {
+    if(length(chill) < 1){
+      aTitle <- paste("No Chill Accumulation Yet at",stnName)
+      plot(0,0,type='n',axes=F,xlab='',ylab='',main=aTitle)
+      return(NULL)
+    }
+  }
 
   if(CHILLTYPE == 1){
     LTChill <- CP
@@ -207,7 +219,7 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
     LTCold <- CUCold
   }
 
-  lastJDay <- 250
+  lastJDay <- 365
   if(Y2DATE == 1){
     lastJDay <- min(max(jday),lastJDay)
   }
@@ -215,19 +227,30 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
 
   today <- max(chill)
 
-  YLIM <- c(0,max(LTCold,na.rm=T))
-  if(Y2DATE == 1){
-    YLIM <- range(chill)
+  #YLIM <- c(0,max(LTCold,na.rm=T))
+
+  if(CHILLTYPE == 3){ #Units
+    LTChillStart <- LTChill[STARTJDAY]
+    LTHotStart <- LTHot[STARTJDAY]
+    LTColdStart <- LTCold[STARTJDAY]
+    YLIM <- c(min(c(chill,LTHot[STARTJDAY:lastJDay] - LTHotStart),na.rm=T),max(c(chill,LTCold[STARTJDAY:lastJDay] - LTColdStart),na.rm=T))
+  } else {
+    YLIM <- c(0,max(c(chill,LTCold),na.rm=T))
   }
-  if(sum(chill) <= 0){
-    aTitle <- paste("No Chill Accumulation Yet at",stnName)
-    plot(0,0,type='n',axes=F,xlab='',ylab='',main=aTitle)
-    return(NULL)
-  }
+
+  par(family = "Helvetica")
+
   plot(c(1,lastJDay),c(0,1),xlab='Date',type='n',ylab=YLAB,axes=F,ylim=YLIM,
        cex.lab=CEX.LAB,main=stnName,cex.main=CEX.MAIN)
 
+  Y1 <- 0.7 * YLIM[2] # first text
+  Y2 <- 0.6 * YLIM[2] # etc
 
+
+  currentYear <- as.numeric(format(Sys.Date(),'%Y'))
+  POS <- 4 # to the right of X, Y
+  X <- 30
+  ffont <- 2
   if(CHILLTYPE == 1){
 
     if(Y2DATE == 2){
@@ -241,29 +264,43 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
 
     day34 <- jday[head(which(chill >= 34),1)]
     day34Date <- format(as.Date(paste(Year,day34,sep='-'),'%Y-%j'),'%d %b')
+
+    if(YEAR == currentYear){
+      text(X,Y1,paste('Today:',formatC(today,width=1),'Chill Portions'),cex=CEX,pos=POS, font = ffont)
+    } else {
+      text(X,Y1,paste('Max:',formatC(today,width=1),'Chill Portions'),cex=CEX,pos=POS, font = ffont)
+    }
     #equiv chill hours
     eqCH <- CH[day34]
-    text(20,50,paste('34 CP reached:',day34Date,'\nEquiv. Chill Hours:',round(eqCH,0)),cex=CEX)
-
-    text(10,70,paste('Today:',formatC(today,width=1)),cex=CEX)
+    text(X,Y2,paste('34 CP reached:',day34Date,'\nwhich is equivalent to:',round(eqCH,0),'Chill Hours'),cex=CEX,pos=POS, font = ffont)
 
   } else {
     axis(2,las=1,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
-    text(10,200,paste('Today:',formatC(today,width=1)),CEX=CEX)
+
+    if(YEAR == currentYear){
+      text(X,Y1,paste('Today:',formatC(today,width=1)),cex=CEX,pos=POS, font = ffont)
+    } else {
+      text(X,Y1,paste('Max:',formatC(today,width=1)),cex=CEX,pos=POS, font = ffont)
+    }
   }
 
 
   lines(jday,chill,lwd=3)
 
-  ats<-pretty(1:250,20)
+  ats<-pretty(1:lastJDay,20)
   labs<-format(as.Date(paste(Year,ats,sep='-'),'%Y-%j'),'%d %b')
   axis(1,at=ats,labs,las=1,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
   if(CHILLTYPE != 3){
     lines(1:lastJDay,LTChill[1:lastJDay],col='green',lwd=3,lty=2)
     lines(1:lastJDay,LTHot[1:lastJDay],col='red',lwd=3,lty=4)
     lines(1:lastJDay,LTCold[1:lastJDay],col='blue',lwd=3,lty=3)
-    legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
+  } else {
+    #for Units we need to recalibrate from the start day of the year
+    lines(STARTJDAY:lastJDay,LTChill[STARTJDAY:lastJDay] - LTChillStart,col='green',lwd=3,lty=2)
+    lines(STARTJDAY:lastJDay,LTHot[STARTJDAY:lastJDay] - LTHotStart,col='red',lwd=3,lty=4)
+    lines(STARTJDAY:lastJDay,LTCold[STARTJDAY:lastJDay] - LTColdStart,col='blue',lwd=3,lty=3)
   }
+  legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
 }
 
 doTheHeatPlot <- function(YEAR,SDATE,LOCATION,Y2DATE,HQ){
@@ -362,8 +399,6 @@ doTheHeatPlot <- function(YEAR,SDATE,LOCATION,Y2DATE,HQ){
     axis(2,las=1,at=YLabels*1000,labels=YLabels,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
   }
 
-  #text(10,70,paste('Today:',formatC(today,width=1)),cex=CEX)
-
   lines(jday,gdh,lwd=3)
 
   ats<-pretty(1:lastJDay,20)
@@ -373,6 +408,82 @@ doTheHeatPlot <- function(YEAR,SDATE,LOCATION,Y2DATE,HQ){
   lines(1:lastJDay,LTGDH[1:lastJDay],col='green',lwd=3,lty=2)
   lines(1:lastJDay,LTHot[1:lastJDay],col='red',lwd=3,lty=4)
   lines(1:lastJDay,LTCold[1:lastJDay],col='blue',lwd=3,lty=3)
+  legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
+}
+
+doTheTempPlot <- function(YEAR,SDATE,LOCATION,Y2DATE,HQ){
+
+  if(HQ == 3){
+    #Screen plot
+    CEX <- 1
+    CEX.AXIS <- 1
+    CEX.LAB <- 1
+    CEX.MAIN <- 1
+    LWD.AXIS <- 1
+    par(mar=c(5.1,4.1,4.1,2.1))
+  } else {
+    CEX <- 1.5
+    CEX.AXIS <- 2
+    CEX.LAB <- 2
+    CEX.MAIN <- 2
+    LWD.AXIS <- 2
+    par(mar=c(5.1,5.1,4.1,2.1))
+  }
+  Year <- as.numeric(YEAR)
+
+  sJDay<-as.numeric(format(SDATE,'%j'))
+  eJDay<-366
+
+
+  stn<-siteInfo$stnID[LOCATION]
+  lat<-siteInfo$latitude[LOCATION]
+  stnName<-siteInfo$Name[LOCATION]
+
+  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+  load(rdata)
+
+  #curretly this is all calendar year stuff
+
+  tab.1<-getMet(stn,Year)
+  maxt <- tab.1$maxt
+  mint <- tab.1$mint
+  jday <- tab.1$day
+
+  lastJDay <- 366
+  if(Y2DATE == 1){
+    lastJDay <- min(max(jday),lastJDay)
+  }
+
+  YLIM <- c(min(c(maxt,mint,minTCold,maxTHot),na.rm=T),max(c(maxt,mint,minTCold,maxTHot),na.rm=T))
+  if(Y2DATE == 1){
+    dataset <- cbind(maxTHot,minTCold)
+    print(dim(dataset))
+    print(c(sJDay,lastJDay))
+    YLIM <- range(c(maxt,mint,as.vector(dataset[sJDay:lastJDay,])),na.rm=T)
+  }
+
+  print(YLIM)
+  plot(c(1,lastJDay),c(0,1),xlab='Date',type='n',ylab='Temperature (ºC)',axes=F,ylim=YLIM,
+       cex.lab=CEX.LAB,main=stnName,cex.main=CEX.MAIN)
+
+
+  lines(jday,maxt,lwd=3)
+
+  lines(jday,mint,lwd=3)
+
+  ats<-pretty(1:lastJDay,20)
+  labs<-format(as.Date(paste(Year,ats,sep='-'),'%Y-%j'),'%d %b')
+  axis(1,at=ats,labs,las=1,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
+
+
+  lines(1:lastJDay,maxTHot[1:lastJDay],col='red',lwd=3,lty=4)
+  lines(1:lastJDay,minTHot[1:lastJDay],col='red',lwd=3,lty=4)
+  lines(1:lastJDay,maxTCold[1:lastJDay],col='blue',lwd=3,lty=3)
+  lines(1:lastJDay,minTCold[1:lastJDay],col='blue',lwd=3,lty=3)
+
+  lines(1:lastJDay,maxTAve[1:lastJDay],col='green',lwd=3,lty=2)
+  lines(1:lastJDay,minTAve[1:lastJDay],col='green',lwd=3,lty=2)
+
   legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
 }
 

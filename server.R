@@ -17,33 +17,42 @@ shinyServer(function(input, output) {
     selectInput('yearInput',h4('Select Year'),as.character(seq(as.numeric(format(Sys.Date(), "%Y")),1968,-1)), format(Sys.Date(), "%Y"))
   })
 
+  output$dateToStartChill <- renderUI({
+    if (is.null(input$yearInput)) {
+      return(NULL) #slider not ready
+    }
+    if(input$cType == 3){
+      dateInput("startJDay", label = h4("Start Chill"), value = paste(input$yearInput,"-05-01",sep=''), min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
+    } else {
+      dateInput("startJDay", label = h4("Start Chill"), value = paste(input$yearInput,"-03-01",sep=''), min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
+    }
+  })
+
   output$dateForGDHOutput <- renderUI({
     if (is.null(input$yearInput)) {
       return(NULL) #slider not ready
     }
-    dateInput("dateInput", label = h4("Start GDH"), value = paste(input$yearInput,"-01-01",sep=''))
+    dateInput("dateInput", label = h4("Start GDH"), value = paste(input$yearInput,"-01-01",sep=''),  min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
   })
 
   checkFordata <- function() {
     cat('Start checkForData\n')
-    #locations<-c('Applethorpe','Shepparton','Manjimup','Huonville','Orange','Mount Barker')
-    #loc<-as.numeric(input$Location)
-    #stnNums<-c(stnQld,stnVic,stnWA,stnTas,stnNSW,stnSA)
+    if(is.null(site$currentLoc)){
+      site$currentLoc <- 247
+    }
+    cat('at row number',site$currentLoc,'found stn:',siteInfo$stnID[site$currentLoc],'\n')
     stn<-siteInfo$stnID[site$currentLoc]
     lat<-siteInfo$latitude[site$currentLoc]
     cat('server:',stn,lat,'\n')
-
+    sJDay<- as.numeric(format(input$startJDay,'%j%'))
     if(input$cType == 1){
-      sJDay<-1
       eJDay<-366
     }
     if(input$cType == 2){
-      sJDay<-1
       eJDay<-366
     }
     if(input$cType == 3){
-      sJDay<-as.numeric(format(as.Date(paste('01-05',Year,sep='-'),'%d-%m-%Y'),'%j'))
-      eJDay<-as.numeric(format(as.Date(paste('31-08',Year,sep='-'),'%d-%m-%Y'),'%j'))
+      eJDay<- 366 #as.numeric(format(as.Date(paste('31-08',YEAR,sep='-'),'%d-%m-%Y'),'%j'))
       print(eJDay)
     }
 
@@ -68,7 +77,8 @@ shinyServer(function(input, output) {
       }
       checkFordata()
       cat('call doThePlot from server.R with',input$yearInput,'\n')
-      doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2Date,3)
+      startJDay <- as.numeric(format(input$startJDay,'%j'))
+      doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2Date,startJDay,3)
     },height=input$height) #renderPlot
   })#observe
 
@@ -80,6 +90,17 @@ shinyServer(function(input, output) {
       }
       checkFordata()
       doTheHeatPlot(input$yearInput,input$dateInput,site$currentLoc,input$Y2Date,3)
+    },height=input$height) #renderPlot
+  })
+
+  ### Temperature Plot ###
+  observe({
+    output$TempPlot <- renderPlot({
+      if (is.null(input$yearInput) | is.null(input$dateInput)) {
+        return(NULL) #sliders not ready
+      }
+      checkFordata()
+      doTheTempPlot(input$yearInput,input$dateInput,site$currentLoc,input$Y2Date,3)
     },height=input$height) #renderPlot
   })
 

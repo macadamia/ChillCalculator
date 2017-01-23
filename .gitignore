@@ -1,4 +1,5 @@
 *.rds
+.Rhistory
 *.RData
 *.jpg
 *.dcf
