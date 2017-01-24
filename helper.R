@@ -359,7 +359,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE,HQ){
       res <- calcHeat(tab.1,lat,sJDay,eJDay)
       gdh <- res$gdh
       YLAB=res$units
-      maxGDH <- res$maxGDH
+      maxGD <- res$maxGDH
       jday <- res$jday
       hours <- res$hours
       hour24 <- which(hours==24)
@@ -376,6 +376,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE,HQ){
       jday <- tab.1[,'day']
       gdd[ jday < sJDay] <- NA
       gd <- gdd - gdd[sJDay]
+      maxGD <- max(gd,na.rm=T)
       YLAB<-substitute("Growing Degree Days (base = "~GDDb*degree*"C)",list(GDDb=GDDb))
     }
   }
@@ -421,18 +422,18 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE,HQ){
   plot(c(sJDay,lastJDay),c(0,1),xlab='Date',type='n',ylab=YLAB,axes=F,ylim=YLIM,
        cex.lab=CEX.LAB,main=stnName,cex.main=CEX.MAIN)
 
-  if(Y2DATE == 2){
+  if(Y2DATE == 2){ #ploting all long-term data
     minLTCold <- min(LTCold,na.rm=T)
     if(GTYPE == 1){
-      YLabels <- pretty(seq(minLTCold,maxGDH)/1000)
+      YLabels <- pretty(seq(minLTCold,maxGD)/1000)
       axis(2,las=1,at=YLabels*1000,labels=YLabels,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
       abline(h=seq(minLTCold,maxGD,length.out = 10),col='grey')
     } else {
-      YLabels <- pretty(seq(minLTCold,maxGDH))
+      YLabels <- pretty(seq(minLTCold,maxGD))
       axis(2,las=1,at=YLabels,labels=YLabels,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
       abline(h=seq(minLTCold,maxGD,length.out = 10),col='grey')
     }
-  } else {
+  } else { #just ploting the same as observed
     if(GTYPE == 1){
       YLabels <- pretty(YLIM)/1000
       axis(2,las=1,at=YLabels*1000,labels=YLabels,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)

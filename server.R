@@ -25,7 +25,9 @@ shinyServer(function(input, output) {
   currentFNTemp <- function() { getFName(site$currentLoc,input$yearInputTemp,input$cType,input$tabs) }
 
   output$yearOutput <- renderUI({
-    selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), format(Sys.Date(), "%Y"))
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), format(Sys.Date(), "%Y"))
+    }
   })
 
   # output$yearOutputChill <- renderUI({
@@ -91,47 +93,49 @@ shinyServer(function(input, output) {
   })
 
 
-  checkFordata <- function() {
-    ##cat('Start checkForData\n')
+  loadTheData <- function() {
+    ##cat('Start loadTheData\n')
     if(is.null(site$currentLoc)){
       site$currentLoc <- 318
     }
-    ##cat('at row number',site$currentLoc,'found stn:',siteInfo$stnID[site$currentLoc],'\n')
     stn<-siteInfo$stnID[site$currentLoc]
-    lat<-siteInfo$latitude[site$currentLoc]
-    if(input$tabs == 'Chill'){
-      sJDay<- as.numeric(format(input$startJDay,'%j'))
-      #print(sJDay)
-      if(input$cType == 1){
-        eJDay<-365
-      }
-      if(input$cType == 2){
-        eJDay<-365
-      }
-      if(input$cType == 3){
-        eJDay<- 365 #as.numeric(format(as.Date(paste('31-08',YEAR,sep='-'),'%d-%m-%Y'),'%j'))
-      }
-    }
-    if(input$tabs == 'Growing Degrees'){
-      sJDay<- as.numeric(format(input$dateInputGDH,'%j'))
-      eJDay<- 365
-    }
-    if(input$tabs == 'Temperature'){
-      #print('hello from temperature tab')
-      sJDay<- as.numeric(format(input$dateInputStart,'%j'))
-      eJDay<- as.numeric(format(input$dateInputEnd,'%j'))
-    }
-
-
-
-    #cat('try and retrieve previously created data\n')
     rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-    withProgress(message = 'Getting Data',value = 0, {
-      load(rdata)
-      incProgress(.9,detail='Create Plot')
-      incProgress(1)
-    }) #progress
+    load(rdata)
   }
+  #   lat<-siteInfo$latitude[site$currentLoc]
+  #   if(input$tabs == 'Chill'){
+  #     sJDay<- as.numeric(format(input$startJDay,'%j'))
+  #     #print(sJDay)
+  #     if(input$cType == 1){
+  #       eJDay<-365
+  #     }
+  #     if(input$cType == 2){
+  #       eJDay<-365
+  #     }
+  #     if(input$cType == 3){
+  #       eJDay<- 365 #as.numeric(format(as.Date(paste('31-08',YEAR,sep='-'),'%d-%m-%Y'),'%j'))
+  #     }
+  #   }
+  #   if(input$tabs == 'Growing Degrees'){
+  #     sJDay<- as.numeric(format(input$dateInputGDH,'%j'))
+  #     eJDay<- 365
+  #   }
+  #   if(input$tabs == 'Temperature'){
+  #     #print('hello from temperature tab')
+  #     sJDay<- as.numeric(format(input$dateInputStart,'%j'))
+  #     eJDay<- as.numeric(format(input$dateInputEnd,'%j'))
+  #   }
+  #
+  #
+  #
+  #   #cat('try and retrieve previously created data\n')
+  #   rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+  #   withProgress(message = 'Getting Data',value = 0, {
+  #     load(rdata)
+  #     incProgress(.9,detail='Create Plot')
+  #     incProgress(1)
+  #   }) #progress
+  # }
 
   ### Chill Plot ###
   observe({
@@ -139,8 +143,7 @@ shinyServer(function(input, output) {
       if (is.null(input$yearInput) | is.null(input$startJDay)) {
         return(NULL) #slider not ready
       }
-      checkFordata()
-      #cat('call doThePlot from server.R with',input$yearInput,'\n')
+      loadTheData()
       startJDay <- as.numeric(format(input$startJDay,'%j'))
       doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,startJDay,3)
     },height=input$heightChill) #renderPlot
@@ -152,7 +155,7 @@ shinyServer(function(input, output) {
       if (is.null(input$yearInput) | is.null(input$dateInputGDH)) {
         return(NULL) #sliders not ready
       }
-      checkFordata()
+      loadTheData()
       doTheHeatPlot(input$yearInput,input$gType,input$dateInputGDH,site$currentLoc,input$Y2DateGDH,3)
     },height=input$heightGDH) #renderPlot
   })
@@ -164,8 +167,8 @@ shinyServer(function(input, output) {
         return(NULL) #sliders not ready
       }
       #print(input$tabs)
-      checkFordata()
-      doTheTempPlot(input$yearInput,input$dateInputStart,input$dateInputEnd,site$currentLoc,input$Y2DateTemp,3)
+      loadTheData()
+      doTheTempPlot(input$yearInput,input$dateInputStart,input$dateInputEnd,site$currentLoc,1,3) #input$Y2DateTemp,3)
     },height=input$heightTemp) #renderPlot
   })
 

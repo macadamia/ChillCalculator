@@ -21,7 +21,7 @@ shinyUI(
             )
           ),
           tabsetPanel(id='tabs',
-          tabPanel("Help",
+          tabPanel("How To Use This Site",
                    h3('Introduction'),
                    helpText('This site accesses daily weather station data for the period 1968 to the current day. This used to make calculations for chilling requirements and heating.
                             Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions or Chill Hours.
@@ -58,7 +58,7 @@ shinyUI(
                    helpText("Anderson, J., Richardson, E., & Kesner, C. (1986). Validation of chill unit and flower bud phenology models for 'Montmorency' sour cherry. Acta Horticulturae, 184, 74-78."),
                    hr()
           ),
-          tabPanel("Locations", value='Select',busyIndicator("Calculation In progress",wait = 10),
+          tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 10),
                    fluidPage(
                      fluidRow(
                        column(width=2,
@@ -123,10 +123,10 @@ shinyUI(
                      fluidRow(
                        column(width=2,
                               #uiOutput("yearOutputTemp"),
-                              radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
+                              #radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
+                              uiOutput("dateForTempStart")
                        ),
                        column(width=3,
-                              uiOutput("dateForTempStart"),
                               uiOutput("dateForTempEnd")
                        ),
                        column(width=4,
