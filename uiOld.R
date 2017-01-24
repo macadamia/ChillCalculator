@@ -4,8 +4,9 @@ library(shiny)
 library(chillR)
 library(shinysky)
 library(leaflet)
-
 #
+# lastYr <- length(years)
+# yearChoices <- as.list(setNames(seq(1,lastYr),as.character(years)))
 
 shinyUI(
 
@@ -15,11 +16,31 @@ shinyUI(
 
     titlePanel(""),
 
-          fluidRow(
-            column(width=6, align = 'center',
-              uiOutput("yearOutput")
-            )
-          ),
+    # Generate a row with a sidebar
+    sidebarLayout(
+
+      # Define the sidebar with one input
+      sidebarPanel(width=2,
+        h3("Select:"),
+        selectInput("Region", label = h4("Select Region"),
+                    choices = list("Granite Belt" = 1, "NSW" = 2,
+                                   "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1),
+        # selectInput("Location", label = h4("Select Site"),
+        #             choices = list("Applethorpe" = 1, "Shepparton" = 2,
+        #                            "Manjimup" = 3, 'Huonville' = 4, 'Orange' = 5, 'Mt Barker' = 6), selected = 1),
+        uiOutput("yearOutput"),
+        radioButtons("Y2Date", label = h4("Year To Date"),
+                     choices = list("Yes" = 1, "No" = 2),selected = 1),
+        uiOutput("dateToStartChill"),
+        radioButtons("cType", label = h4("Chill Type"),
+                     choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1),
+        uiOutput("dateForGDHOutput"),
+        sliderInput("height", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600),
+        #downloadButton("outputPDF", "Download PDF"),
+        downloadButton("outputJPEG", "Download JPEG")
+      ),
+
+      mainPanel(
           tabsetPanel(id='tabs',
           tabPanel("Help",
                    h3('Introduction'),
@@ -58,87 +79,12 @@ shinyUI(
                    helpText("Anderson, J., Richardson, E., & Kesner, C. (1986). Validation of chill unit and flower bud phenology models for 'Montmorency' sour cherry. Acta Horticulturae, 184, 74-78."),
                    hr()
           ),
-          tabPanel("Locations", value='Select',busyIndicator("Calculation In progress",wait = 10),
-                   fluidPage(
-                     fluidRow(
-                       column(width=2,
-                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1)
-                       ),
-                       column(width=2,
-                              textInput("Location", label = h4("Search For Station"),value=''),
-                              htmlOutput("NMatches")
-                       ),
-                       column(width=8,
-                              leafletOutput("map", width='600px',height='600px' )
-                      )
-                    )
-                  )
+          tabPanel("Locations", value='Select',busyIndicator("Calculation In progress",wait = 500),
+                   leafletOutput("map", width='800px',height='600px' )
           ),
-          tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 10),
-            fluidPage(
-              fluidRow(
-                column(width=2,
-                       radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
-                ),
-                column(width=3,
-                       #uiOutput("yearOutputChill"),
-                       radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
-                ),
-                column(width=3,
-                       uiOutput("dateToStartChill")
-                ),
-                column(width=3,
-                       sliderInput("heightChill", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                       #downloadButton("outputJPEGCHill", "Download JPEG")
-                )
-              ),#fluidRow
-              fluidRow(
-                  plotOutput("chillPlot")
-              )
-            )#fluidPage
-        ),
-          tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 10),
-              fluidPage(
-                fluidRow(
-                  column(width=2,
-                         #uiOutput("yearOutputGDH"),
-                         radioButtons("Y2DateGDH", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
-                  ),
-                  column(width=3,
-                         uiOutput("dateForGDHOutput"),
-                         radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
-                  ),
-                  column(width=3,
-                         sliderInput("heightGDH", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                         #downloadButton("outputJPEGGDH", "Download JPEG")
-                  )
-                ),
-                fluidRow(
-                  plotOutput("GDHPlot")
-                )
-              )#fluidPage
-          ),
-          tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 10),
-                   fluidPage(
-                     fluidRow(
-                       column(width=2,
-                              #uiOutput("yearOutputTemp"),
-                              radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
-                       ),
-                       column(width=3,
-                              uiOutput("dateForTempStart"),
-                              uiOutput("dateForTempEnd")
-                       ),
-                       column(width=4,
-                              sliderInput("heightTemp", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                              #downloadButton("outputJPEGTemp", "Download JPEG")
-                       )
-                     ),
-                     fluidRow(
-                        plotOutput("TempPlot")
-                     )
-                )
-          ),
+          tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 10), plotOutput("chillPlot")),
+          tabPanel("GDH", value ='GDH', busyIndicator("Calculation In progress",wait = 10), plotOutput("GDHPlot")),
+          tabPanel("Temperatures", value ='Temp', busyIndicator("Calculation In progress",wait = 10), plotOutput("TempPlot")),
           tabPanel("About & Legal",
                    h4("About This Site"),
                    helpText("This site is being developed to deliver up-to-date and historical information on the accumulation of chill and growing degree days."),
@@ -147,5 +93,7 @@ shinyUI(
 
           )
         ) #tabset
+      )#mainPanel
+    )#sidebarLayout
   )#fluidPage
 )#shinyUI
