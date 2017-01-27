@@ -1,5 +1,11 @@
 siteInfo <- readRDS('Data/SiteInfo.rds')
+gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
+
+
+cleanup <- which(siteInfo$Name == 'Warburton Airfield')
+siteInfo <- siteInfo[-cleanup,]
+siteInfo[,'NamePerc'] <- paste(siteInfo$Name,' ',formatC((siteInfo$PercMaxTObs+siteInfo$PercMinTObs)/2*100,format='f',digits=1),'%',sep='')
 
 cols<-c('Year','JDay','Tmax','TMin')
 hours<-paste('Hour',seq(1,24),sep='_')
@@ -7,7 +13,7 @@ cols<-c(cols,hours)
 
 searchForLocation <- function(location){
   #listOfStns
-  this <- grep(location,siteInfo$Name,ignore.case=T)
+  this <- grep(tolower(location),tolower(siteInfo$Name),fixed = T)
   if(length(this) == 1){
     return(list(searchedSite=siteInfo$Name[this],searchedLat=siteInfo$latitude[this],searchedLng=siteInfo$longitude[this]))
   }
@@ -15,6 +21,23 @@ searchForLocation <- function(location){
     return(NULL)
   }
   if(length(this) > 1){
+    return(list(N=length(this),these=this))
+  }
+}
+
+searchForPlace<- function(location){
+  #listOfStns
+  cat('searchForPlace',location,'\n')
+  this <- grep(tolower(location),tolower(gaz$PlaceStatePostCode),fixed = T)
+  cat('this',length(this),'\n')
+  if(length(this) == 1){
+    return(list(searchedSite=gaz$PlaceStatePostCode[this],searchedLat=gaz$Latitude[this],searchedLng=gaz$Longitude[this]))
+  }
+  if(length(this) < 1){
+    return(NULL)
+  }
+  if(length(this) > 1){
+    #cat('Found',length(this),'towns\n')
     return(list(N=length(this),these=this))
   }
 }
@@ -145,7 +168,8 @@ calcLT <- function(tab.1,lat,sJDay){ # long-Term data
   return(ch)
 }
 
-doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTJDAY,HQ){
+#doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
+doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,HQ){
   #cat('doThePlot from helper.R',YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ,'\n')
   if(HQ == 3){
     #Screen plot
@@ -165,18 +189,17 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTJDAY,HQ){
   }
 
   Year <- as.numeric(YEAR)
-  sJDay<-STARTJDAY
+  print(STARTDATE)
+  sJDay<- as.numeric(format(STARTDATE,'%j'))
+  eJDay<-366
   if(CHILLTYPE == 1){
     YLAB='Chill Portions'
-    eJDay<-366
   }
   if(CHILLTYPE == 2){
     YLAB='Chill Hours'
-    eJDay<-366
   }
   if(CHILLTYPE == 3){
     YLAB='Chill Units'
-    eJDay<- 366 #as.numeric(format(as.Date(paste('31-08',YEAR,sep='-'),'%d-%m-%Y'),'%j'))
   }
 
 
@@ -316,6 +339,7 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTJDAY,HQ){
   }
   legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
 }
+
 
 doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE,HQ){
 
@@ -531,16 +555,17 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE,HQ){
   legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
 }
 
-getFName <- function(LOCATION,YEAR,CTYPE,TABNAME){
+getFName <- function(LOCATION,YEAR,CTYPE,GTYPE,TABNAME){
   if(TABNAME == 'Chill'){
     cTypes <- c('CP','Hours')
     dataType <- cTypes[as.numeric(CTYPE)]
+  } else if (TABNAME == 'Growing Degrees'){
+    gTypes <- c('GDHours','GDDays')
+    dataType <- gTypes[as.numeric(GTYPE)]
   } else {
     dataType <- TABNAME
   }
-  stnNums<-c(stnQld,stnVic,stnWA,stnTas,stnNSW,stnSA)
-  years <- seq(2012,2016)
-  paste(stnNums[as.numeric(LOCATION)],YEAR,dataType,sep='_')
+  paste(siteInfo$stnID[as.numeric(LOCATION)],YEAR,dataType,sep='_')
 }
 
 makePDF <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
@@ -549,14 +574,29 @@ makePDF <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
   dev.off()
 }
 
-#makeJPEG(input$yearInput,input$cType,input$Location,input$Y2Date,input$dateInput,input$height,input$tabs,2)
-makeJPEG <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,DATEINPUT,HEIGHT,TABS,HQ){
+#makeJPEG(input$yearInput,input$cType,input$gType,input$Location,input$Y2DateChill,input$dateInput,input$dateInputEnd,input$heightGDH,input$heightChill,input$heightTemp,input$tabs,2)
+
+makeJPEG <- function(YEAR,CHILLTYPE,GTYPE,LOCATION,Y2DATE,DATESTART,DATEEND,HEIGHTGD,HEIGHTCH,HEIGHTT,TABS,HQ){
+  if(TABS == 'CHILL'){
+    HEIGHT = HEIGHTCH
+  }
+  if(TABS == 'Growing Degrees'){
+    HEIGHT = HEIGHTGD
+  }
+  if(TABS == 'Temperature'){
+    HEIGHT = HEIGHTT
+  }
   WIDTH = HEIGHT * 1200 / 800
   jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
-  if(TABS == 'GDH') {
-    doTheHeatPlot(YEAR,DATEINPUT,LOCATION,Y2DATE,HQ)
-  } else {
-    doThePlot(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ)
+  if(TABS == 'Growing Degrees') {
+    doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,Y2DATE,3)
+  }
+  if(TABS == 'CHILL'){
+    startJDay <- as.numeric(format(DATESTART,'%j'))
+    doThePlot(YEAR,CTYPE,LOCATION,Y2DATE,startJDay,3)
+  }
+  if(TABS == 'Temperature'){
+    doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION,1,3)
   }
 
   dev.off()

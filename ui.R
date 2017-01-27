@@ -16,30 +16,39 @@ shinyUI(
     titlePanel(""),
 
           fluidRow(
-            column(width=6, align = 'center',
+            column(width=3, align = 'center',
               uiOutput("yearOutput")
+            ),
+            column(width=3, align = 'center',
+                   uiOutput("dateStart")
+            ),
+            column(width=3, align = 'center',
+                   uiOutput("dateEnd")
+            ),
+            column(width=3, align = 'center',
+              uiOutput('downloadJPEG')
             )
           ),
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",
                    h3('Introduction'),
-                   helpText('This site accesses daily weather station data for the period 1968 to the current day. This used to make calculations for chilling requirements and heating.
+                   helpText('This site accesses daily weather station data for the period 1968 to the current day for 600 stations. This used to make calculations for chilling requirements and heating.
                             Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions or Chill Hours.
                             All calculations are performed using the chillR package of Luedeling et al. (2013).'),
 
                    h3('Where and When'),
-                   helpText('There are 597 locations in the database which can be selected from the Locations tab. The map is zoomable and pannable in the normal way. Select a station by clicking the marker and selecting with Chill or GDH to see the data. Initially the map is zoomed to the Granite Belt.'),
+                   helpText('There are 600 locations in the database which can be selected from the Locations tab. The map is zoomable and pannable in the normal way. Select a station by clicking the marker and selecting with Chill or GDH to see the data. Initially the map is zoomed to the Granite Belt.'),
                    helpText('Years from 1968 to the present day can be chosen. The latest weather day is
                             available after about midday (AEST) and is current then up to yesterday. The Year To Date option is useful during the current year when one wants to concentrate on
                             the progress of the chill or heat accumulation for the most recent period. Data are displayed with the long-term average, and the warmest and coolest years.
                             data from 1981 to 2010 are used for the long-term averages etc.'),
 
                    h3('Chill Accumulation'),
-                   helpText('Chilling can be calculated in either Chill Portions (Fishman et al. 1987) or Chill Hours (Richardson et al. 1974).'),
-                   helpText("Chill is calculated as either chill portions or chill hours. Chill units and the ability to search for locations will be added in the future."),
+                   helpText('Chilling can be calculated in either Chill Portions (Erez et al. 1990), Chill Hours (Bennet 1949, Weinberger 1950) or Chill Units (Richardson et al. 1974).'),
 
-                   h3('Growing Degree Days'),
-                   helpText('Growing Degree Hours (GDH) are calculated when the user selects the GDH tab. GDH are calculated using the methodology of Anderson et al. (1986) that uses four thresholds to calculate the accumulation of yield.
+                   h3('Growing Degrees'),
+                   helpText('Growing Degree Hours (GDH) (Anderson et al 1974) or Growing Degree Days (GDD) are calculated when the user selects the "Growing Degrees" tab. GDH are calculated using the methodology of Anderson et al. (1986) that uses four thresholds to calculate the accumulation of yield.
+                            GDD are calculated using by subtracting 10ºC from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC.
                             These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.'),
 
                    h3('Other Options'),
@@ -51,7 +60,7 @@ shinyUI(
                    HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a>"),
                    h4("References"),
                    helpText("Luedeling E, Kunz A and Blanke M, 2013. Identification of chilling and heat requirements of cherry trees - a statistical approach. International Journal of Biometeorology 57,679-689."),
-                   helpText("Fishman S, Erez A, Couvillon GA. 1987. The temperature dependence of dormancy breaking in plants: Mathematical analysis of a two-step model involving a cooperative transition. Journal of Theoretical Biology, 124: 473-483."),
+                   helpText("Erez A, Fishman S, Linsley-Noakes GC, Allan P 1990. The dynamic model for rest completion in peach buds. Acta Hortic 276, 165-174"),
                    helpText("Weinberger JH (1950) Chilling requirements of peach varieties. Proc Am Soc Hortic Sci 56, 122-128"),
                    helpText("Bennett JP (1949) Temperature and bud rest period. Calif Agric 3 (11), 9+12"),
                    helpText("Richardson EA, Seeley SD, Walker DR (1974) A model for estimating the completion of rest for Redhaven and Elberta peach trees. HortScience 9(4), 331-332"),
@@ -61,12 +70,13 @@ shinyUI(
           tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 10),
                    fluidPage(
                      fluidRow(
-                       column(width=2,
-                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1)
-                       ),
-                       column(width=2,
+                       column(width=4,
+                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
-                              htmlOutput("NMatches")
+                              htmlOutput("NMatches"),
+                              textInput("Town", label = h4("Search For Town"),value=''),
+                              htmlOutput("StationInfo"),
+                              htmlOutput("NTowns")
                        ),
                        column(width=8,
                               leafletOutput("map", width='600px',height='600px' )
@@ -84,9 +94,9 @@ shinyUI(
                        #uiOutput("yearOutputChill"),
                        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
                 ),
-                column(width=3,
-                       uiOutput("dateToStartChill")
-                ),
+                # column(width=3,
+                #        uiOutput("dateToStartChill")
+                # ),
                 column(width=3,
                        sliderInput("heightChill", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
                        #downloadButton("outputJPEGCHill", "Download JPEG")
@@ -104,10 +114,10 @@ shinyUI(
                          #uiOutput("yearOutputGDH"),
                          radioButtons("Y2DateGDH", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
                   ),
-                  column(width=3,
-                         uiOutput("dateForGDHOutput"),
-                         radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
-                  ),
+                  # column(width=3,
+                  #        uiOutput("dateForGDHOutput"),
+                  #        radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
+                  # ),
                   column(width=3,
                          sliderInput("heightGDH", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
                          #downloadButton("outputJPEGGDH", "Download JPEG")
@@ -121,14 +131,14 @@ shinyUI(
           tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 10),
                    fluidPage(
                      fluidRow(
-                       column(width=2,
-                              #uiOutput("yearOutputTemp"),
-                              #radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
-                              uiOutput("dateForTempStart")
-                       ),
-                       column(width=3,
-                              uiOutput("dateForTempEnd")
-                       ),
+                       # column(width=2,
+                       #        #uiOutput("yearOutputTemp"),
+                       #        #radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
+                       #        uiOutput("dateForTempStart")
+                       # ),
+                       # column(width=3,
+                       #        uiOutput("dateForTempEnd")
+                       # ),
                        column(width=4,
                               sliderInput("heightTemp", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
                               #downloadButton("outputJPEGTemp", "Download JPEG")
