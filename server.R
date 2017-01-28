@@ -56,11 +56,10 @@ shinyServer(function(input, output) {
   output$dateStart <- renderUI({
     if (is.null(input$yearInput)) {
       yearInput <- 2017
-      value1 <- checkDate(paste(yearInput,"-05-01",sep=''))
     } else {
       yearInput <- input$yearInput
-      value1 <- checkDate(paste(yearInput,"-05-01",sep=''))
     }
+
     if(input$tabs == 'Chill'){
       print(input$tabs)
       if(input$cType == 3){
@@ -101,6 +100,11 @@ shinyServer(function(input, output) {
     }
   })
 
+  output$sliderForHeight <-renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
+    }
+  })
 
 
   # output$dateToStartChill <- renderUI({
@@ -155,8 +159,8 @@ shinyServer(function(input, output) {
       }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate1,3)
-    },height=input$heightChill) #renderPlot
+      doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
+    },height=input$JPEGHeight) #renderPlot
   })#observe
 
   ### GDH Plot ###
@@ -167,7 +171,7 @@ shinyServer(function(input, output) {
       }
       loadTheData()
       doTheHeatPlot(input$yearInput,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH,3)
-    },height=input$heightGDH) #renderPlot
+    },height=input$JPEGHeight) #renderPlot
   })
 
   ### Temperature Plot ###
@@ -179,7 +183,7 @@ shinyServer(function(input, output) {
       #print(input$tabs)
       loadTheData()
       doTheTempPlot(input$yearInput,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
-    },height=input$heightTemp) #renderPlot
+    },height=input$JPEGHeight) #renderPlot
   })
 
   ### Leaflet Map ###########
@@ -340,7 +344,7 @@ shinyServer(function(input, output) {
       paste(currentFN(),'jpg',sep='.')
       },
     content=function(file) {
-      makeJPEG(input$yearInput,input$cType,input$gType,input$Location,input$Y2DateChill,input$startDate,input$endDate,input$heightGDH,input$heightChill,input$heightTemp,input$tabs,2)
+      makeJPEG(input$yearInput,input$cType,input$gType,input$Location,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
       file.copy(from = "myGenerated.jpg", to = file)
     }
   )

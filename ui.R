@@ -26,6 +26,7 @@ shinyUI(
                    uiOutput("dateEnd")
             ),
             column(width=3, align = 'center',
+              uiOutput("sliderForHeight"),
               uiOutput('downloadJPEG')
             )
           ),
@@ -54,20 +55,9 @@ shinyUI(
                    h3('Other Options'),
                    helpText("The plot height can be controlled using the slider. It moves in 100-pixel steps and can set between 400 and 1200 pixels. The width is set as the width of the main panel.
                             A jpeg of the image is created and downloaded to the user's computer when the download button is selected."),
-                   helpText("If you would like further information please contact: "),
-                   HTML("<a href=mailto:heidi.parkes@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Heidi Parkes, Qld Dept. of Agriculture and Fisheries</a>"),
-                   helpText("For Technical issues: "),
-                   HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a>"),
-                   h4("References"),
-                   helpText("Luedeling E, Kunz A and Blanke M, 2013. Identification of chilling and heat requirements of cherry trees - a statistical approach. International Journal of Biometeorology 57,679-689."),
-                   helpText("Erez A, Fishman S, Linsley-Noakes GC, Allan P 1990. The dynamic model for rest completion in peach buds. Acta Hortic 276, 165-174"),
-                   helpText("Weinberger JH (1950) Chilling requirements of peach varieties. Proc Am Soc Hortic Sci 56, 122-128"),
-                   helpText("Bennett JP (1949) Temperature and bud rest period. Calif Agric 3 (11), 9+12"),
-                   helpText("Richardson EA, Seeley SD, Walker DR (1974) A model for estimating the completion of rest for Redhaven and Elberta peach trees. HortScience 9(4), 331-332"),
-                   helpText("Anderson, J., Richardson, E., & Kesner, C. (1986). Validation of chill unit and flower bud phenology models for 'Montmorency' sour cherry. Acta Horticulturae, 184, 74-78."),
-                   hr()
+                    hr()
           ),
-          tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 10),
+          tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
                      fluidRow(
                        column(width=4,
@@ -84,7 +74,7 @@ shinyUI(
                     )
                   )
           ),
-          tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 10),
+          tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
             fluidPage(
               fluidRow(
                 column(width=2,
@@ -93,44 +83,44 @@ shinyUI(
                 column(width=3,
                        #uiOutput("yearOutputChill"),
                        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
-                ),
+                )
                 # column(width=3,
                 #        uiOutput("dateToStartChill")
                 # ),
-                column(width=3,
-                       sliderInput("heightChill", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                       #downloadButton("outputJPEGCHill", "Download JPEG")
-                )
+                # column(width=3,
+                #        sliderInput("heightChill", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
+                #        #downloadButton("outputJPEGCHill", "Download JPEG")
+                # )
               ),#fluidRow
               fluidRow(
                   plotOutput("chillPlot")
               )
             )#fluidPage
         ),
-          tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 10),
+          tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),
               fluidPage(
                 fluidRow(
                   column(width=2,
                          #uiOutput("yearOutputGDH"),
                          radioButtons("Y2DateGDH", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
                   ),
-                  # column(width=3,
-                  #        uiOutput("dateForGDHOutput"),
-                  #        radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
-                  # ),
                   column(width=3,
-                         sliderInput("heightGDH", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                         #downloadButton("outputJPEGGDH", "Download JPEG")
+                         #uiOutput("dateForGDHOutput"),
+                         radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
                   )
+                  # column(width=3,
+                  #        sliderInput("heightGDH", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
+                  #        #downloadButton("outputJPEGGDH", "Download JPEG")
+                  # )
                 ),
                 fluidRow(
                   plotOutput("GDHPlot")
                 )
               )#fluidPage
           ),
-          tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 10),
+          tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
-                     fluidRow(
+                     #fluidRow(
                        # column(width=2,
                        #        #uiOutput("yearOutputTemp"),
                        #        #radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
@@ -139,11 +129,11 @@ shinyUI(
                        # column(width=3,
                        #        uiOutput("dateForTempEnd")
                        # ),
-                       column(width=4,
-                              sliderInput("heightTemp", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                              #downloadButton("outputJPEGTemp", "Download JPEG")
-                       )
-                     ),
+                       # column(width=4,
+                       #        sliderInput("heightTemp", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
+                       #        #downloadButton("outputJPEGTemp", "Download JPEG")
+                       # )
+                     #),
                      fluidRow(
                         plotOutput("TempPlot")
                      )
@@ -152,9 +142,19 @@ shinyUI(
           tabPanel("About & Legal",
                    h4("About This Site"),
                    helpText("This site is being developed to deliver up-to-date and historical information on the accumulation of chill and growing degree days."),
+                   helpText('Based on or contains data provided by the State of Queensland (Department of Science, Information Technology and Innovation) [2016]. In consideration of the State permitting use of this data you acknowledge and agree that the State gives no warranty in relation to the data (including accuracy, reliability, completeness, currency or suitability) and accepts no liability (including without limitation, liability in negligence) for any loss, damage or costs (including consequential damage) relating to any use of the data. Data must not be used in breach of the privacy laws.'),
                    hr(),
-                   helpText('Based on or contains data provided by the State of Queensland (Department of Science, Information Technology and Innovation) [2016]. In consideration of the State permitting use of this data you acknowledge and agree that the State gives no warranty in relation to the data (including accuracy, reliability, completeness, currency or suitability) and accepts no liability (including without limitation, liability in negligence) for any loss, damage or costs (including consequential damage) relating to any use of the data. Data must not be used in breach of the privacy laws.')
-
+                   helpText("If you would like further information please contact: "),
+                   HTML("<a href=mailto:heidi.parkes@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Heidi Parkes, Qld Dept. of Agriculture and Fisheries</a>"),
+                   helpText("For Technical issues: "),
+                   HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/>"),
+                   h4("References"),
+                   helpText("Luedeling E, Kunz A and Blanke M, 2013. Identification of chilling and heat requirements of cherry trees - a statistical approach. International Journal of Biometeorology 57,679-689."),
+                   helpText("Erez A, Fishman S, Linsley-Noakes GC, Allan P 1990. The dynamic model for rest completion in peach buds. Acta Hortic 276, 165-174"),
+                   helpText("Weinberger JH (1950) Chilling requirements of peach varieties. Proc Am Soc Hortic Sci 56, 122-128"),
+                   helpText("Bennett JP (1949) Temperature and bud rest period. Calif Agric 3 (11), 9+12"),
+                   helpText("Richardson EA, Seeley SD, Walker DR (1974) A model for estimating the completion of rest for Redhaven and Elberta peach trees. HortScience 9(4), 331-332"),
+                   helpText("Anderson, J., Richardson, E., & Kesner, C. (1986). Validation of chill unit and flower bud phenology models for 'Montmorency' sour cherry. Acta Horticulturae, 184, 74-78.")
           )
         ) #tabset
   )#fluidPage

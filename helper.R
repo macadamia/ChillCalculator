@@ -29,7 +29,6 @@ searchForPlace<- function(location){
   #listOfStns
   cat('searchForPlace',location,'\n')
   this <- grep(tolower(location),tolower(gaz$PlaceStatePostCode),fixed = T)
-  cat('this',length(this),'\n')
   if(length(this) == 1){
     return(list(searchedSite=gaz$PlaceStatePostCode[this],searchedLat=gaz$Latitude[this],searchedLng=gaz$Longitude[this]))
   }
@@ -37,7 +36,6 @@ searchForPlace<- function(location){
     return(NULL)
   }
   if(length(this) > 1){
-    #cat('Found',length(this),'towns\n')
     return(list(N=length(this),these=this))
   }
 }
@@ -376,10 +374,11 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE,HQ){
   #currently this is all calendar year stuff
 
   tab.1<-getMet(stn,Year)
+  print('got tab.1')
   if(!any(is.na(tab.1))){
-
+    print(GTYPE)
     if(GTYPE == 1) {
-      #cat('calculate GDH\n')
+      cat('calculate GDH\n')
       res <- calcHeat(tab.1,lat,sJDay,eJDay)
       gdh <- res$gdh
       YLAB=res$units
@@ -576,16 +575,7 @@ makePDF <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
 
 #makeJPEG(input$yearInput,input$cType,input$gType,input$Location,input$Y2DateChill,input$dateInput,input$dateInputEnd,input$heightGDH,input$heightChill,input$heightTemp,input$tabs,2)
 
-makeJPEG <- function(YEAR,CHILLTYPE,GTYPE,LOCATION,Y2DATE,DATESTART,DATEEND,HEIGHTGD,HEIGHTCH,HEIGHTT,TABS,HQ){
-  if(TABS == 'CHILL'){
-    HEIGHT = HEIGHTCH
-  }
-  if(TABS == 'Growing Degrees'){
-    HEIGHT = HEIGHTGD
-  }
-  if(TABS == 'Temperature'){
-    HEIGHT = HEIGHTT
-  }
+makeJPEG <- function(YEAR,CHILLTYPE,GTYPE,LOCATION,Y2DATE,DATESTART,DATEEND,HEIGHT,TABS,HQ){
   WIDTH = HEIGHT * 1200 / 800
   jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
   if(TABS == 'Growing Degrees') {
