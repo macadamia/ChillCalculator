@@ -84,13 +84,6 @@ shinyUI(
                        #uiOutput("yearOutputChill"),
                        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
                 )
-                # column(width=3,
-                #        uiOutput("dateToStartChill")
-                # ),
-                # column(width=3,
-                #        sliderInput("heightChill", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                #        #downloadButton("outputJPEGCHill", "Download JPEG")
-                # )
               ),#fluidRow
               fluidRow(
                   plotOutput("chillPlot")
@@ -108,10 +101,6 @@ shinyUI(
                          #uiOutput("dateForGDHOutput"),
                          radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
                   )
-                  # column(width=3,
-                  #        sliderInput("heightGDH", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                  #        #downloadButton("outputJPEGGDH", "Download JPEG")
-                  # )
                 ),
                 fluidRow(
                   plotOutput("GDHPlot")
@@ -120,20 +109,6 @@ shinyUI(
           ),
           tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
-                     #fluidRow(
-                       # column(width=2,
-                       #        #uiOutput("yearOutputTemp"),
-                       #        #radioButtons("Y2DateTemp", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
-                       #        uiOutput("dateForTempStart")
-                       # ),
-                       # column(width=3,
-                       #        uiOutput("dateForTempEnd")
-                       # ),
-                       # column(width=4,
-                       #        sliderInput("heightTemp", "Plot Height (px)", min = 400, max = 1200,step = 100, value = 600)
-                       #        #downloadButton("outputJPEGTemp", "Download JPEG")
-                       # )
-                     #),
                      fluidRow(
                         plotOutput("TempPlot")
                      )

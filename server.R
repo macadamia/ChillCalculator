@@ -14,14 +14,13 @@ shinyServer(function(input, output) {
 
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))
 
-  #selectedYear <- reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
+  selectedYear <- reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
 
   results <- reactive({
     searchForLocation(input$Location)
   })
 
   towns <- reactive({
-    cat('towns()',input$Town,'\n')
     searchForPlace(input$Town)
   })
 
@@ -30,7 +29,7 @@ shinyServer(function(input, output) {
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), format(Sys.Date(), "%Y"))
+      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
     }
   })
 
@@ -55,30 +54,28 @@ shinyServer(function(input, output) {
 
   output$dateStart <- renderUI({
     if (is.null(input$yearInput)) {
-      yearInput <- 2017
-    } else {
-      yearInput <- input$yearInput
+      return(NULL)
     }
+    selectedYear$Year <- input$yearInput
 
     if(input$tabs == 'Chill'){
-      print(input$tabs)
       if(input$cType == 3){
-        value1 <- checkDate(paste(yearInput,"-05-01",sep=''))
+        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
       } else {
-        value1 = checkDate(paste(yearInput,"-03-01",sep=''))
+        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
       }
     }
 
     if(input$tabs == 'Growing Degrees' ){
-      value1 = checkDate(paste(yearInput,"-05-01",sep=''))
+      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
     }
 
     if(input$tabs == 'Temperature'){
-      value1 = checkDate(paste(yearInput,"-01-01",sep=''))
+      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
     }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
+      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
     }
   })
 
@@ -88,7 +85,7 @@ shinyServer(function(input, output) {
       if (is.null(input$yearInput)) {
         return(NULL) #dropbox not ready
       }
-      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(input$yearInput,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
+      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
 
     }
   })
@@ -106,42 +103,7 @@ shinyServer(function(input, output) {
     }
   })
 
-
-  # output$dateToStartChill <- renderUI({
-  #   if (is.null(input$yearInput)) {
-  #     return(NULL) #selector not ready
-  #   }
-  #   if(input$cType == 3){
-  #     dateInput("startJDay", label = h4("Start Date"), value = checkDate(paste(input$yearInput,"-05-01",sep='')), min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
-  #   } else {
-  #     dateInput("startJDay", label = h4("Start Date"), value = checkDate(paste(input$yearInput,"-03-01",sep='')), min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
-  #   }
-  # })
-  #
-  # output$dateForGDHOutput <- renderUI({
-  #   if (is.null(input$yearInput)) {
-  #     return(NULL) #dropbox not ready
-  #   }
-  #   dateInput("dateInputGDH", label = h4("Start Date"), value = checkDate(paste(input$yearInput,"-05-01",sep='')),  min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
-  # })
-  #
-  # output$dateForTempStart <- renderUI({
-  #   if (is.null(input$yearInput)) {
-  #     return(NULL) #dropbox not ready
-  #   }
-  #   dateInput("dateInputStart", label = h4("Start Date"), value = checkDate(paste(input$yearInput,"-01-01",sep='')),  min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
-  # })
-
-  # output$dateForTempEnd <- renderUI({
-  #   if (is.null(input$yearInput)) {
-  #     return(NULL) #dropbox not ready
-  #   }
-  #   dateInput("dateInputEnd", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(input$yearInput,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
-  # })
-
-
   loadTheData <- function() {
-    ##cat('Start loadTheData\n')
     if(is.null(site$currentLoc)){
       site$currentLoc <- startTown
     }
@@ -159,7 +121,7 @@ shinyServer(function(input, output) {
       }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
+      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
     },height=input$JPEGHeight) #renderPlot
   })#observe
 
@@ -170,19 +132,18 @@ shinyServer(function(input, output) {
         return(NULL) #sliders not ready
       }
       loadTheData()
-      doTheHeatPlot(input$yearInput,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH,3)
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH,3)
     },height=input$JPEGHeight) #renderPlot
   })
 
   ### Temperature Plot ###
   observe({
     output$TempPlot <- renderPlot({
-      if (is.null(input$yearInput) | is.null(input$startDate) | is.null(input$endDate)) {
+      if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
         return(NULL) #sliders not ready
       }
-      #print(input$tabs)
       loadTheData()
-      doTheTempPlot(input$yearInput,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
+      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
     },height=input$JPEGHeight) #renderPlot
   })
 
@@ -249,7 +210,6 @@ shinyServer(function(input, output) {
             } else {
               textIs <-HTML(paste(textIs,siteInfo$Name[i],sep='<br/>'))
             }
-            #print(textIs)
           }
         }
         output$NMatches <- renderUI({
@@ -267,13 +227,11 @@ shinyServer(function(input, output) {
     }
 
     searchTowns <- towns()
-    cat('searchTowns',length(searchTowns),'\n')
     if(!is.null(searchTowns)){
       if(length(searchTowns) == 2) {
         #just the count of matches
         textIs2 <- HTML(paste('There <b>',searchTowns$N,'</b>possible Towns'))
-        print(searchTowns$N)
-        if(searchTowns$N <= 10){
+        if(searchTowns$N <= 25){
           first <- T
           textIs2 <- HTML(paste('There <b>',searchTowns$N,'</b>possible Towns<br/>'))
           for(i in searchTowns$these){
@@ -298,7 +256,6 @@ shinyServer(function(input, output) {
         zoom <- 12
       }
     }
-    #cat(rlng,rlat,'\n')
     leaflet(data = siteInfo) %>%
       addTiles() %>%
       addMarkers(~longitude,~latitude, layerId = ~stnID, popup = ~NamePerc) %>%
@@ -340,11 +297,10 @@ shinyServer(function(input, output) {
 
   output$outputJPEG <- downloadHandler(
     filename = function() {
-      print(paste(currentFN(),'jpg',sep='.'))
       paste(currentFN(),'jpg',sep='.')
       },
     content=function(file) {
-      makeJPEG(input$yearInput,input$cType,input$gType,input$Location,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
+      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
       file.copy(from = "myGenerated.jpg", to = file)
     }
   )
