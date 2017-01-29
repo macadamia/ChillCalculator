@@ -114,6 +114,13 @@ shinyUI(
                      )
                 )
           ),
+        tabPanel('Additional Information',
+                 fluidRow(
+                   column(width=12,
+                    includeHTML('Additional.html')
+                   )
+                 )
+        ),
           tabPanel("About & Legal",
                    h4("About This Site"),
                    helpText("This site is being developed to deliver up-to-date and historical information on the accumulation of chill and growing degree days."),
