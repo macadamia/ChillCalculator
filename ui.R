@@ -33,8 +33,8 @@ shinyUI(
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",
                    h3('Introduction'),
-                   helpText('This site accesses daily weather station data for the period 1968 to the current day for 600 stations. This used to make calculations for chilling requirements and heating.
-                            Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions or Chill Hours.
+                   helpText('This site accesses daily weather station data for the period 1968 to the current day for 600 stations. This is used to make calculations for chilling requirements and heating.
+                            Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions, Chill Units or Chill Hours.
                             All calculations are performed using the chillR package of Luedeling et al. (2013).'),
 
                    h3('Where and When'),
@@ -49,7 +49,7 @@ shinyUI(
 
                    h3('Growing Degrees'),
                    helpText('Growing Degree Hours (GDH) (Anderson et al 1974) or Growing Degree Days (GDD) are calculated when the user selects the "Growing Degrees" tab. GDH are calculated using the methodology of Anderson et al. (1986) that uses four thresholds to calculate the accumulation of yield.
-                            GDD are calculated using by subtracting 10ºC from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC.
+                            GDD are calculated by subtracting 10ºC from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC.
                             These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.'),
 
                    h3('Other Options'),
@@ -117,7 +117,16 @@ shinyUI(
           tabPanel('Additional Information',
                    fluidRow(
                      column(width=12,
-                      includeHTML('Additional.html')
+                      includeHTML('Additional.html'),
+                      h4("References"),
+                      helpText("Anderson, J., Richardson, E., & Kesner, C. (1986). Validation of chill unit and flower bud phenology models for 'Montmorency' sour cherry. Acta Horticulturae, 184, 74-78."),
+                      helpText("Bennett JP (1949) Temperature and bud rest period. Calif Agric 3 (11), 9-12"),
+                      helpText('Darbyshire, R., K. Pope and I. Goodwin (2016). An evaluation of the chill overlap model to predict flowering time in apple tree. Scientia Horticulturae 198: 142-149.'),
+                      helpText("Erez A, Fishman S, Linsley-Noakes GC, Allan P (1990). The dynamic model for rest completion in peach buds. Acta Hortic 276, 165-174"),
+                      helpText('Ghariani, K. and R. L. Stebbins (1994). Chilling requirements of apple and pear cultivars. Fruit Varieties Journal 48: 215.'),
+                      helpText("Luedeling E, Kunz A and Blanke M, 2013. Identification of chilling and heat requirements of cherry trees - a statistical approach. International Journal of Biometeorology 57,679-689."),
+                      helpText("Richardson EA, Seeley SD, Walker DR (1974) A model for estimating the completion of rest for Redhaven and Elberta peach trees. HortScience 9(4), 331-332"),
+                      helpText("Weinberger JH (1950) Chilling requirements of peach varieties. Proc Am Soc Hortic Sci 56, 122-128")
                      )
                    )
           ),
@@ -129,14 +138,7 @@ shinyUI(
                    helpText("If you would like further information please contact: "),
                    HTML("<a href=mailto:heidi.parkes@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Heidi Parkes, Qld Dept. of Agriculture and Fisheries</a>"),
                    helpText("For Technical issues: "),
-                   HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/>"),
-                   h4("References"),
-                   helpText("Luedeling E, Kunz A and Blanke M, 2013. Identification of chilling and heat requirements of cherry trees - a statistical approach. International Journal of Biometeorology 57,679-689."),
-                   helpText("Erez A, Fishman S, Linsley-Noakes GC, Allan P 1990. The dynamic model for rest completion in peach buds. Acta Hortic 276, 165-174"),
-                   helpText("Weinberger JH (1950) Chilling requirements of peach varieties. Proc Am Soc Hortic Sci 56, 122-128"),
-                   helpText("Bennett JP (1949) Temperature and bud rest period. Calif Agric 3 (11), 9+12"),
-                   helpText("Richardson EA, Seeley SD, Walker DR (1974) A model for estimating the completion of rest for Redhaven and Elberta peach trees. HortScience 9(4), 331-332"),
-                   helpText("Anderson, J., Richardson, E., & Kesner, C. (1986). Validation of chill unit and flower bud phenology models for 'Montmorency' sour cherry. Acta Horticulturae, 184, 74-78.")
+                   HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>")
           )
         ) #tabset
   )#fluidPage
