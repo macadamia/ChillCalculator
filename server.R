@@ -1,115 +1,160 @@
 #server.R
 
 library(chillR)
-library(rdrop2)
 library(shinysky)
 library(leaflet)
 
 source('helper.R')
 
+startTown <- which(siteInfo$Name == 'Applethorpe')
+
 shinyServer(function(input, output) {
 
-  site <- reactiveValues(currentlLoc=247,name='Applethorpe')
+  site <- reactiveValues(currentlLoc=startTown,name='Applethorpe')
 
-  currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$tabs) }
+  currentYear <- as.numeric(format(Sys.Date(), "%Y"))
+
+  selectedYear <- reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
+
+  results <- reactive({
+    searchForLocation(input$Location)
+  })
+
+  towns <- reactive({
+    searchForPlace(input$Town)
+  })
+
+
+  currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
   output$yearOutput <- renderUI({
-    selectInput('yearInput',h4('Select Year'),as.character(seq(as.numeric(format(Sys.Date(), "%Y")),1968,-1)), format(Sys.Date(), "%Y"))
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+    }
   })
 
-  output$dateToStartChill <- renderUI({
-    if (is.null(input$yearInput)) {
-      return(NULL) #slider not ready
-    }
-    if(input$cType == 3){
-      dateInput("startJDay", label = h4("Start Chill"), value = paste(input$yearInput,"-05-01",sep=''), min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
+  checkDate <- function(aDate){
+    if(as.Date(aDate) < Sys.Date() ){
+      return(aDate)
     } else {
-      dateInput("startJDay", label = h4("Start Chill"), value = paste(input$yearInput,"-03-01",sep=''), min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
+      return(paste(strsplit(aDate,'-')[[1]][1],'-01-01',sep=''))
     }
-  })
-
-  output$dateForGDHOutput <- renderUI({
-    if (is.null(input$yearInput)) {
-      return(NULL) #slider not ready
-    }
-    dateInput("dateInput", label = h4("Start GDH"), value = paste(input$yearInput,"-01-01",sep=''),  min = paste(input$yearInput,"-01-01",sep=''), max =  Sys.Date() - 1)
-  })
-
-  checkFordata <- function() {
-    cat('Start checkForData\n')
-    if(is.null(site$currentLoc)){
-      site$currentLoc <- 247
-    }
-    cat('at row number',site$currentLoc,'found stn:',siteInfo$stnID[site$currentLoc],'\n')
-    stn<-siteInfo$stnID[site$currentLoc]
-    lat<-siteInfo$latitude[site$currentLoc]
-    cat('server:',stn,lat,'\n')
-    sJDay<- as.numeric(format(input$startJDay,'%j%'))
-    if(input$cType == 1){
-      eJDay<-366
-    }
-    if(input$cType == 2){
-      eJDay<-366
-    }
-    if(input$cType == 3){
-      eJDay<- 366 #as.numeric(format(as.Date(paste('31-08',YEAR,sep='-'),'%d-%m-%Y'),'%j'))
-      print(eJDay)
-    }
-
-    #try and retrieve previously created data
-    rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-    withProgress(message = 'Getting Data',value = 0, {
-      print(getwd())
-      print(rdata)
-      load(rdata)
-      incProgress(.9,detail='Create Plot')
-
-      incProgress(1)
-      print('Completed Check For data')
-    }) #progress
   }
+
+  checkDateEnd <- function(aDate){
+    aYear <- as.numeric(input$yearInput)
+    thisYear <- as.numeric(format(Sys.Date(),'%Y'))
+    if(aYear == thisYear){
+      return(Sys.Date()-1)
+    } else {
+      return(paste(aYear,'-12-31',sep=''))
+    }
+  }
+
+
+  output$dateStart <- renderUI({
+    if (is.null(input$yearInput)) {
+      return(NULL)
+    }
+    selectedYear$Year <- input$yearInput
+
+    if(input$tabs == 'Chill'){
+      if(input$cType == 3){
+        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+      } else {
+        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
+      }
+    }
+
+    if(input$tabs == 'Growing Degrees' ){
+      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+    }
+
+    if(input$tabs == 'Temperature'){
+      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
+    }
+
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
+    }
+  })
+
+  output$dateEnd <- renderUI({
+
+    if(input$tabs == 'Temperature'){
+      if (is.null(input$yearInput)) {
+        return(NULL) #dropbox not ready
+      }
+      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
+
+    }
+  })
+
+
+  output$downloadJPEG <- renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      downloadButton("outputJPEG", "Download JPEG")
+    }
+  })
+
+  output$sliderForHeight <-renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
+    }
+  })
+
+  loadTheData <- function() {
+    if(is.null(site$currentLoc)){
+      site$currentLoc <- startTown
+    }
+    stn<-siteInfo$stnID[site$currentLoc]
+    rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+    load(rdata)
+  }
+
 
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlot({
-      if (is.null(input$yearInput)) {
+      if (is.null(input$yearInput) | is.null(input$startDate)) {
         return(NULL) #slider not ready
       }
-      checkFordata()
-      cat('call doThePlot from server.R with',input$yearInput,'\n')
-      startJDay <- as.numeric(format(input$startJDay,'%j'))
-      doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2Date,startJDay,3)
-    },height=input$height) #renderPlot
+      loadTheData()
+      startJDay <- as.numeric(format(input$startDate,'%j'))
+      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
+    },height=input$JPEGHeight) #renderPlot
   })#observe
 
   ### GDH Plot ###
   observe({
     output$GDHPlot <- renderPlot({
-      if (is.null(input$yearInput) | is.null(input$dateInput)) {
+      if (is.null(input$yearInput) | is.null(input$startDate)) {
         return(NULL) #sliders not ready
       }
-      checkFordata()
-      doTheHeatPlot(input$yearInput,input$dateInput,site$currentLoc,input$Y2Date,3)
-    },height=input$height) #renderPlot
+      loadTheData()
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH,3)
+    },height=input$JPEGHeight) #renderPlot
   })
 
   ### Temperature Plot ###
   observe({
     output$TempPlot <- renderPlot({
-      if (is.null(input$yearInput) | is.null(input$dateInput)) {
+      if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
         return(NULL) #sliders not ready
       }
-      checkFordata()
-      doTheTempPlot(input$yearInput,input$dateInput,site$currentLoc,input$Y2Date,3)
-    },height=input$height) #renderPlot
+      loadTheData()
+      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
+    },height=input$JPEGHeight) #renderPlot
   })
 
   ### Leaflet Map ###########
+
+
   output$map <- renderLeaflet({
-    if (is.null(input$yearInput)) {
-      return(NULL) #slider not ready
-    }
-    zoom <- 8
+    # if (is.null(input$yearInput)) {
+    #   return(NULL) #slider not ready
+    # }
+    zoom <- 9
     if(input$Region == "1"){
       #granite belt
       mtch <- match('Applethorpe',siteInfo$Name)
@@ -124,9 +169,10 @@ shinyServer(function(input, output) {
     }
     if(input$Region == "3"){
       #NSW
-      mtch <- match('Shepparton Airport',siteInfo$Name)
+      mtch <- match('Kilmore Gap',siteInfo$Name)
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
+      zoom <- 8
     }
     if(input$Region == "4"){
       #NSW
@@ -148,10 +194,71 @@ shinyServer(function(input, output) {
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
     }
-    cat(rlng,rlat,'\n')
+
+    searchResults <- results()
+    if(!is.null(searchResults)){
+      if(length(searchResults) == 2) {
+        #just the count of matches
+        textIs <- HTML(paste('There <b>',searchResults$N,'</b>possible Locations'))
+        if(searchResults$N <= 10){
+          first <- T
+          textIs <- HTML(paste('There <b>',searchResults$N,'</b>possible Locations<br/>'))
+          for(i in searchResults$these){
+            if(first){
+              first <- F
+              textIs <- HTML(paste(textIs,siteInfo$Name[i],sep='<br/>'))
+            } else {
+              textIs <-HTML(paste(textIs,siteInfo$Name[i],sep='<br/>'))
+            }
+          }
+        }
+        output$NMatches <- renderUI({
+          textIs
+        })
+      }
+      if(length(searchResults) == 3) {
+        output$NMatches <- renderUI({
+          HTML(paste('Found',searchResults$searchedSite,'<br/>Click Marker to Select it'))
+        })
+        rlng <- searchResults$searchedLng
+        rlat <- searchResults$searchedLat
+        zoom <- 12
+      }
+    }
+
+    searchTowns <- towns()
+    if(!is.null(searchTowns)){
+      if(length(searchTowns) == 2) {
+        #just the count of matches
+        textIs2 <- HTML(paste('There <b>',searchTowns$N,'</b>possible Towns'))
+        if(searchTowns$N <= 25){
+          first <- T
+          textIs2 <- HTML(paste('There <b>',searchTowns$N,'</b>possible Towns<br/>'))
+          for(i in searchTowns$these){
+            if(first){
+              first <- F
+              textIs2 <- HTML(paste(textIs2,gaz$PlaceStatePostCode[i],sep='<br/>'))
+            } else {
+              textIs2 <-HTML(paste(textIs2,gaz$PlaceStatePostCode[i],sep='<br/>'))
+            }
+          }
+        }
+        output$NTowns <- renderUI({
+          textIs2
+        })
+      }
+      if(length(searchTowns) == 3) {
+        output$NTowns <- renderUI({
+          HTML(paste('Found',searchTowns$searchedSite,'<br/>Select nearby location to Select it'))
+        })
+        rlng <- searchTowns$searchedLng
+        rlat <- searchTowns$searchedLat
+        zoom <- 12
+      }
+    }
     leaflet(data = siteInfo) %>%
       addTiles() %>%
-      addMarkers(~longitude,~latitude, layerId = ~stnID, popup = ~as.character(Name)) %>%
+      addMarkers(~longitude,~latitude, layerId = ~stnID, popup = ~NamePerc) %>%
       setView(lng = rlng, lat = rlat, zoom = zoom)
   })
 
@@ -163,32 +270,41 @@ shinyServer(function(input, output) {
     text<-paste("Lattitude ", click$lat, "Longtitude ", click$lng)
     rowNumber <- which(siteInfo$stnID == click$id)
     text2<-paste("You've selected point", click$id,'at row #',rowNumber)
-    print(text2)
+    perc <- (siteInfo$PercMaxTObs[rowNumber]+siteInfo$PercMinTObs[rowNumber])/2*100
+    warning <- ''
+    if(perc < 0.5) {
+      warning <- '<b>Warning:</b>'
+      output$StationInfo <- renderUI({
+        HTML(paste(warning,siteInfo$Name[rowNumber],'recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/>',sep=' '))
+      })
+    }
+    #print(text2)
     site$currentLoc <- rowNumber
     # output$Click_text<-renderText({
     #   text2
     # })
   })
 
-  output$outputPDF <- downloadHandler(
-    filename = function() {
-      paste(currentFN(),'pdf',sep='.')
-    },
-    content=function(file) {
-      makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date,2)
-      file.copy(from = "myGenerated.pdf", to = file)
-    }
-  )
+  # output$outputPDF <- downloadHandler(
+  #   filename = function() {
+  #     paste(currentFN(),'pdf',sep='.')
+  #   },
+  #   content=function(file) {
+  #     makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date,2)
+  #     file.copy(from = "myGenerated.pdf", to = file)
+  #   }
+  # )
 
   output$outputJPEG <- downloadHandler(
     filename = function() {
       paste(currentFN(),'jpg',sep='.')
       },
     content=function(file) {
-      makeJPEG(input$yearInput,input$cType,input$Location,input$Y2Date,input$dateInput,input$height,input$tabs,2)
+      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
       file.copy(from = "myGenerated.jpg", to = file)
     }
   )
+
 
 })
 
