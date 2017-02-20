@@ -2,6 +2,7 @@
 #ui.R
 library(shiny)
 library(chillR)
+library(plotly)
 library(shinysky)
 library(leaflet)
 
@@ -110,7 +111,7 @@ shinyUI(
           tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
                      fluidRow(
-                        plotOutput("TempPlot")
+                       plotlyOutput("TempPlot")
                      )
                 )
           ),

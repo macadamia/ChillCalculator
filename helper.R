@@ -508,29 +508,68 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE,HQ){
     YLIM <- range(c(maxt,mint,as.vector(dataset[sJDay:eJDay,])),na.rm=T)
   }
 
-  plot(c(sJDay,eJDay),c(0,1),xlab='Date',type='n',ylab='Temperature (ºC)',axes=F,ylim=YLIM,
-       cex.lab=CEX.LAB,main=stnName,cex.main=CEX.MAIN)
+  # plot(c(sJDay,eJDay),c(0,1),xlab='Date',type='n',ylab='Temperature (ºC)',axes=F,ylim=YLIM,
+  #      cex.lab=CEX.LAB,main=stnName,cex.main=CEX.MAIN)
+  #
+  #
+  # lines(jday[sJDay:eJDay],maxt[sJDay:eJDay],lwd=3)
+  #
+  # lines(jday[sJDay:eJDay],mint[sJDay:eJDay],lwd=3)
+  #
+  # ats<-pretty(sJDay:eJDay,20)
+  # labs<-format(as.Date(paste(Year,ats,sep='-'),'%Y-%j'),'%d %b')
+  # axis(1,at=ats,labs,las=1,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
+  # axis(2,las=1)
+  #
+  #
+  # lines(sJDay:eJDay,maxTHot[sJDay:eJDay],col='red',lwd=3,lty=4)
+  # lines(sJDay:eJDay,minTHot[sJDay:eJDay],col='red',lwd=3,lty=4)
+  # lines(sJDay:eJDay,maxTCold[sJDay:eJDay],col='blue',lwd=3,lty=3)
+  # lines(sJDay:eJDay,minTCold[sJDay:eJDay],col='blue',lwd=3,lty=3)
+  #
+  # lines(sJDay:eJDay,maxTAve[sJDay:eJDay],col='green',lwd=3,lty=2)
+  # lines(sJDay:eJDay,minTAve[sJDay:eJDay],col='green',lwd=3,lty=2)
+  #
+  # legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
+  #
 
+  f1 <- list(
+    family = "Arial, sans-serif",
+    size = 18,
+    color = "black"
+  )
+  f2 <- list(
+    family = "Old Standard TT, serif",
+    size = 14,
+    color = "black"
+  )
 
-  lines(jday[sJDay:eJDay],maxt[sJDay:eJDay],lwd=3)
+  a <- list(
+    title = "Date",
+    titlefont = f1,
+    showticklabels = TRUE,
+    dtick=7
+  )
 
-  lines(jday[sJDay:eJDay],mint[sJDay:eJDay],lwd=3)
+  b <- list(
+    title = "Temperature (°C)",
+    titlefont = f1,
+    showticklabels = TRUE,
+    tickangle = 0,
+    tickfont = f2
+  )
 
-  ats<-pretty(sJDay:eJDay,20)
-  labs<-format(as.Date(paste(Year,ats,sep='-'),'%Y-%j'),'%d %b')
-  axis(1,at=ats,labs,las=1,cex.axis=CEX.AXIS,lwd=LWD.AXIS,cex=CEX)
-  axis(2,las=1)
+  JDays <- sJDay:eJDay
+  #ats<-pretty(JDays,min(20,length(JDays)))
+  labs<-format(as.Date(paste(Year,JDays,sep='-'),'%Y-%j'),'%d %b')
+  data <- data.frame(date=labs,maxt=maxt[JDays],mint=mint[JDays],
+                     maxTAve=maxTAve[JDays],minTAve=minTAve[JDays])
+  p <- plot_ly(data, x = ~labs, y = ~maxt,  type = "scatter", mode='lines') %>%
+    add_trace(y = ~mint) %>%
+    add_trace(y = ~maxTAve) %>%
+    add_trace(y = ~minTAve) %>%
+    layout(xaxis=a)
 
-
-  lines(sJDay:eJDay,maxTHot[sJDay:eJDay],col='red',lwd=3,lty=4)
-  lines(sJDay:eJDay,minTHot[sJDay:eJDay],col='red',lwd=3,lty=4)
-  lines(sJDay:eJDay,maxTCold[sJDay:eJDay],col='blue',lwd=3,lty=3)
-  lines(sJDay:eJDay,minTCold[sJDay:eJDay],col='blue',lwd=3,lty=3)
-
-  lines(sJDay:eJDay,maxTAve[sJDay:eJDay],col='green',lwd=3,lty=2)
-  lines(sJDay:eJDay,minTAve[sJDay:eJDay],col='green',lwd=3,lty=2)
-
-  legend('top',legend=c(Year,'Average (1981 - 2010)','Warmest 10%','Coolest 10%'),lwd=3,lty=c(1,2,4,3),col=c('black','green','red','blue'),bty='n',ncol=4,cex=CEX)
 }
 
 getFName <- function(LOCATION,YEAR,CTYPE,GTYPE,TABNAME){

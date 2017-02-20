@@ -3,6 +3,7 @@
 library(chillR)
 library(shinysky)
 library(leaflet)
+library(plotly)
 
 source('helper.R')
 
@@ -137,15 +138,25 @@ shinyServer(function(input, output) {
   })
 
   ### Temperature Plot ###
-  observe({
-    output$TempPlot <- renderPlot({
-      if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
-        return(NULL) #sliders not ready
-      }
-      loadTheData()
-      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
-    },height=input$JPEGHeight) #renderPlot
+  # observe({
+  #   output$TempPlot <- renderPlotly({
+  #     if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
+  #       return(NULL) #sliders not ready
+  #     }
+  #     loadTheData()
+  #     doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
+  #   },height=input$JPEGHeight) #renderPlot
+  # })
+
+  output$TempPlot <- renderPlotly({
+    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
+      return(NULL) #sliders not ready
+    }
+    loadTheData()
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
   })
+
+
 
   ### Leaflet Map ###########
 
