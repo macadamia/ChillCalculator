@@ -28,6 +28,12 @@ shinyServer(function(input, output) {
 
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
+  output$SelectedLocation <- renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
+    }
+  })
+
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
       selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
@@ -116,44 +122,35 @@ shinyServer(function(input, output) {
 
   ### Chill Plot ###
   observe({
-    output$chillPlot <- renderPlot({
+    output$chillPlot <- renderPlotly({
       if (is.null(input$yearInput) | is.null(input$startDate)) {
         return(NULL) #slider not ready
       }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
-    },height=input$JPEGHeight) #renderPlot
+      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
+    }) #renderPlotly
   })#observe
 
   ### GDH Plot ###
   observe({
-    output$GDHPlot <- renderPlot({
+    output$GDHPlot <- renderPlotly({
       if (is.null(input$yearInput) | is.null(input$startDate)) {
         return(NULL) #sliders not ready
       }
       loadTheData()
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH,3)
-    },height=input$JPEGHeight) #renderPlot
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH)
+    }) #renderPlotly
   })
 
   ### Temperature Plot ###
-  # observe({
-  #   output$TempPlot <- renderPlotly({
-  #     if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
-  #       return(NULL) #sliders not ready
-  #     }
-  #     loadTheData()
-  #     doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
-  #   },height=input$JPEGHeight) #renderPlot
-  # })
 
   output$TempPlot <- renderPlotly({
     if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
       return(NULL) #sliders not ready
     }
     loadTheData()
-    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1,3) #input$Y2DateTemp,3)
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1) #input$Y2DateTemp,3)
   })
 
 
@@ -280,17 +277,16 @@ shinyServer(function(input, output) {
     }
     text<-paste("Lattitude ", click$lat, "Longtitude ", click$lng)
     rowNumber <- which(siteInfo$stnID == click$id)
+    site$currentLoc <- rowNumber
     text2<-paste("You've selected point", click$id,'at row #',rowNumber)
     perc <- (siteInfo$PercMaxTObs[rowNumber]+siteInfo$PercMinTObs[rowNumber])/2*100
     warning <- ''
     if(perc < 0.5) {
       warning <- '<b>Warning:</b>'
-      output$StationInfo <- renderUI({
-        HTML(paste(warning,siteInfo$Name[rowNumber],'recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/>',sep=' '))
-      })
     }
-    #print(text2)
-    site$currentLoc <- rowNumber
+    output$StationInfo <- renderUI({
+      HTML(paste(warning,'You have selected:<b>',siteInfo$Name[rowNumber],'</b><br/> Which recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/><br/>',sep=' '))
+    })
     # output$Click_text<-renderText({
     #   text2
     # })
@@ -301,7 +297,7 @@ shinyServer(function(input, output) {
   #     paste(currentFN(),'pdf',sep='.')
   #   },
   #   content=function(file) {
-  #     makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date,2)
+  #     makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date)
   #     file.copy(from = "myGenerated.pdf", to = file)
   #   }
   # )
@@ -311,7 +307,7 @@ shinyServer(function(input, output) {
       paste(currentFN(),'jpg',sep='.')
       },
     content=function(file) {
-      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
+      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs)
       file.copy(from = "myGenerated.jpg", to = file)
     }
   )

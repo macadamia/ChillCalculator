@@ -17,13 +17,16 @@ shinyUI(
     titlePanel(""),
 
           fluidRow(
-            column(width=3, align = 'center',
+            column(width=2, align = 'center',
+                   uiOutput("SelectedLocation")
+            ),
+            column(width=2, align = 'center',
               uiOutput("yearOutput")
             ),
-            column(width=3, align = 'center',
+            column(width=2, align = 'center',
                    uiOutput("dateStart")
             ),
-            column(width=3, align = 'center',
+            column(width=2, align = 'center',
                    uiOutput("dateEnd")
             ),
             column(width=3, align = 'center',
@@ -64,9 +67,9 @@ shinyUI(
                        column(width=4,
                           selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
+                              htmlOutput("StationInfo"),
                               htmlOutput("NMatches"),
                               textInput("Town", label = h4("Search For Town"),value=''),
-                              htmlOutput("StationInfo"),
                               htmlOutput("NTowns")
                        ),
                        column(width=8,
@@ -87,7 +90,7 @@ shinyUI(
                 )
               ),#fluidRow
               fluidRow(
-                  plotOutput("chillPlot")
+                  plotlyOutput("chillPlot")
               )
             )#fluidPage
         ),
@@ -104,7 +107,7 @@ shinyUI(
                   )
                 ),
                 fluidRow(
-                  plotOutput("GDHPlot")
+                  plotlyOutput("GDHPlot")
                 )
               )#fluidPage
           ),
