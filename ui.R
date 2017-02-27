@@ -85,8 +85,10 @@ shinyUI(
                        radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
                 ),
                 column(width=3,
-                       #uiOutput("yearOutputChill"),
                        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
+                ),
+                column(width=3,
+                       htmlOutput("chillToDate")
                 )
               ),#fluidRow
               fluidRow(

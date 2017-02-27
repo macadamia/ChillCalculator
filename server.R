@@ -36,7 +36,7 @@ shinyServer(function(input, output) {
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
     }
   })
 
@@ -86,9 +86,13 @@ shinyServer(function(input, output) {
     }
   })
 
+  output$chillToDate <- renderUI({
+    HTML("h4(Chill Accumulated:)")
+  })
+
   output$dateEnd <- renderUI({
 
-    if(input$tabs == 'Temperature'){
+    if( input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
       if (is.null(input$yearInput)) {
         return(NULL) #dropbox not ready
       }
@@ -128,7 +132,7 @@ shinyServer(function(input, output) {
       }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
+      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
     }) #renderPlotly
   })#observe
 
@@ -139,7 +143,7 @@ shinyServer(function(input, output) {
         return(NULL) #sliders not ready
       }
       loadTheData()
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH)
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH)
     }) #renderPlotly
   })
 
