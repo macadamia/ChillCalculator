@@ -25,7 +25,7 @@ shinyServer(function(input, output,session) {
 
 
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
-  print(site)
+
   callModule(fluidRowServer,"chillControls",selectedYear,currentYear,site,siteInfo)
   callModule(fluidRowServer,"gdhControls",selectedYear,currentYear,site,siteInfo)
   callModule(fluidRowServer,"tempControls",selectedYear,currentYear,site,siteInfo)
@@ -106,11 +106,12 @@ shinyServer(function(input, output,session) {
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate)) {
-        return(NULL) #slider not ready
-      }
+       if (is.null(input$startDate) | is.null(input$startDate)) {
+         return(NULL)
+       }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
+      cat(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,'startDate',input$startDate,'enddate',input$endDate,':\n')
       doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
     }) #renderPlotly
   })#observe

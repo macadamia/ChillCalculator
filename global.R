@@ -17,7 +17,6 @@ fluidRowUI <- function(id){
 
 fluidRowServer <- function(input, output, session,selectedYear,currentYear,site,siteInfo){
   output$SelectedLocation <- renderUI({
-    ns <- session$ns
     HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
   })
 
@@ -28,25 +27,27 @@ fluidRowServer <- function(input, output, session,selectedYear,currentYear,site,
 
   output$dateStart <- renderUI({
     ns <- session$ns
+    if (is.null(input$yearInput)) {
+      return(NULL)
+    }
     selectedYear$Year <- input$yearInput
-
-    if(input$tabs == 'Chill'){
-      if(input$cType == 3){
-        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
-      } else {
-        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
-      }
-    }
-
-    if(input$tabs == 'Growing Degrees' ){
-      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
-    }
-
-    if(input$tabs == 'Temperature'){
-      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
-    }
-
-      dateInput(ns("startDate"), label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
+    # if(input$tabs == 'Chill'){
+    #   if(input$cType == 3){
+    #     value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+    #   } else {
+    #     value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
+    #   }
+    # }
+    #
+    # if(input$tabs == 'Growing Degrees' ){
+    #   value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+    # }
+    #
+    # if(input$tabs == 'Temperature'){
+    #   value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
+    # }
+    value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
+    dateInput(ns("startDate"), label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
   })
 
 
@@ -55,7 +56,8 @@ fluidRowServer <- function(input, output, session,selectedYear,currentYear,site,
       if (is.null(input$yearInput)) {
         return(NULL) #year not read
       }
-      dateInput(ns("endDate"), label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
+    dateInput(ns("endDate"), label = h4("End Date"), value = checkDateEnd(input$yearInput),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date()-1)
 
   })
+  return(list(startDate = value1))
 }

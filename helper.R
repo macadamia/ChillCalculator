@@ -10,14 +10,15 @@ checkDate <- function(aDate){
   }
 }
 
-checkDateEnd <- function(aDate){
-  aYear <- as.numeric(input$yearInput)
+checkDateEnd <- function(ayear){
+  aYear <- as.numeric(ayear)
   thisYear <- as.numeric(format(Sys.Date(),'%Y'))
   if(aYear == thisYear){
-    return(Sys.Date()-1)
+    theDate <- Sys.Date()-1
   } else {
-    return(paste(aYear,'-12-31',sep=''))
+    theDate <- paste(aYear,'-12-31',sep='')
   }
+  return(theDate)
 }
 
 
