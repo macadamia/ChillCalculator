@@ -5,11 +5,9 @@ library(shinysky)
 library(leaflet)
 library(plotly)
 
-source('helper.R')
-
 startTown <- which(siteInfo$Name == 'Applethorpe')
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output,session) {
 
   site <- reactiveValues(currentlLoc=startTown,name='Applethorpe')
 
@@ -27,92 +25,73 @@ shinyServer(function(input, output) {
 
 
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
+  print(site)
+  callModule(fluidRowServer,"chillControls",selectedYear,currentYear,site,siteInfo)
+  callModule(fluidRowServer,"gdhControls",selectedYear,currentYear,site,siteInfo)
+  callModule(fluidRowServer,"tempControls",selectedYear,currentYear,site,siteInfo)
 
-  output$SelectedLocation <- renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
-    }
-  })
-
-  output$yearOutput <- renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
-    }
-  })
-
-  checkDate <- function(aDate){
-    if(as.Date(aDate) < Sys.Date() ){
-      return(aDate)
-    } else {
-      return(paste(strsplit(aDate,'-')[[1]][1],'-01-01',sep=''))
-    }
-  }
-
-  checkDateEnd <- function(aDate){
-    aYear <- as.numeric(input$yearInput)
-    thisYear <- as.numeric(format(Sys.Date(),'%Y'))
-    if(aYear == thisYear){
-      return(Sys.Date()-1)
-    } else {
-      return(paste(aYear,'-12-31',sep=''))
-    }
-  }
-
-
-  output$dateStart <- renderUI({
-    if (is.null(input$yearInput)) {
-      return(NULL)
-    }
-    selectedYear$Year <- input$yearInput
-
-    if(input$tabs == 'Chill'){
-      if(input$cType == 3){
-        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
-      } else {
-        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
-      }
-    }
-
-    if(input$tabs == 'Growing Degrees' ){
-      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
-    }
-
-    if(input$tabs == 'Temperature'){
-      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
-    }
-
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
-    }
-  })
-
-  output$chillToDate <- renderUI({
-    HTML("h4(Chill Accumulated:)")
-  })
-
-  output$dateEnd <- renderUI({
-
-    if( input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      if (is.null(input$yearInput)) {
-        return(NULL) #dropbox not ready
-      }
-      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
-
-    }
-  })
+  # output$SelectedLocation <- renderUI({
+  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
+  #   }
+  # })
+  #
+  # output$yearOutput <- renderUI({
+  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+  #   }
+  # })
+  # output$dateStart <- renderUI({
+  #   if (is.null(input$yearInput)) {
+  #     return(NULL)
+  #   }
+  #   selectedYear$Year <- input$yearInput
+  #
+  #   if(input$tabs == 'Chill'){
+  #     if(input$cType == 3){
+  #       value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+  #     } else {
+  #       value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
+  #     }
+  #   }
+  #
+  #   if(input$tabs == 'Growing Degrees' ){
+  #     value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+  #   }
+  #
+  #   if(input$tabs == 'Temperature'){
+  #     value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
+  #   }
+  #
+  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
+  #   }
+  # })
+  #
+  #
+  # output$dateEnd <- renderUI({
+  #
+  #   if( input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     if (is.null(input$yearInput)) {
+  #       return(NULL) #dropbox not ready
+  #     }
+  #     dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
+  #
+  #   }
+  # })
 
 
-  output$downloadJPEG <- renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      downloadButton("outputJPEG", "Download JPEG")
-    }
-  })
+  # output$downloadJPEG <- renderUI({
+  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     downloadButton("outputJPEG", "Download JPEG")
+  #   }
+  # })
 
-  output$sliderForHeight <-renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
-    }
-  })
+  # output$sliderForHeight <-renderUI({
+  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
+  #   }
+  # })
 
   loadTheData <- function() {
     if(is.null(site$currentLoc)){

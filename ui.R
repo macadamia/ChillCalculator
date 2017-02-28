@@ -6,7 +6,6 @@ library(plotly)
 library(shinysky)
 library(leaflet)
 
-#
 
 shinyUI(
 
@@ -15,25 +14,6 @@ shinyUI(
     tags$head(includeScript("google_analytics.js")),
 
     titlePanel(""),
-
-          fluidRow(
-            column(width=2, align = 'center',
-                   uiOutput("SelectedLocation")
-            ),
-            column(width=2, align = 'center',
-              uiOutput("yearOutput")
-            ),
-            column(width=2, align = 'center',
-                   uiOutput("dateStart")
-            ),
-            column(width=2, align = 'center',
-                   uiOutput("dateEnd")
-            ),
-            column(width=3, align = 'center',
-              uiOutput("sliderForHeight"),
-              uiOutput('downloadJPEG')
-            )
-          ),
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",
                    h3('Introduction'),
@@ -79,25 +59,24 @@ shinyUI(
                   )
           ),
           tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
-            fluidPage(
-              fluidRow(
-                column(width=2,
-                       radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
-                ),
-                column(width=3,
-                       radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
-                ),
-                column(width=3,
-                       htmlOutput("chillToDate")
-                )
-              ),#fluidRow
-              fluidRow(
-                  plotlyOutput("chillPlot")
-              )
-            )#fluidPage
-        ),
+                   fluidPage(
+                     fluidRowUI("chillControls"),
+                     fluidRow(
+                       column(width=2,
+                              radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
+                       ),
+                       column(width=3,
+                              radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
+                       )
+                     ),#fluidRow
+                     fluidRow(
+                       plotlyOutput("chillPlot")
+                     )
+                   )#fluidPage
+          ),
           tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),
               fluidPage(
+                fluidRowUI("gdhControls"),
                 fluidRow(
                   column(width=2,
                          #uiOutput("yearOutputGDH"),
@@ -115,6 +94,7 @@ shinyUI(
           ),
           tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
+                     fluidRowUI("tempControls"),
                      fluidRow(
                        plotlyOutput("TempPlot")
                      )
@@ -149,3 +129,4 @@ shinyUI(
         ) #tabset
   )#fluidPage
 )#shinyUI
+

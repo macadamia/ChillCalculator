@@ -2,6 +2,24 @@ siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
 
+checkDate <- function(aDate){
+  if(as.Date(aDate) < Sys.Date() ){
+    return(aDate)
+  } else {
+    return(paste(strsplit(aDate,'-')[[1]][1],'-01-01',sep=''))
+  }
+}
+
+checkDateEnd <- function(aDate){
+  aYear <- as.numeric(input$yearInput)
+  thisYear <- as.numeric(format(Sys.Date(),'%Y'))
+  if(aYear == thisYear){
+    return(Sys.Date()-1)
+  } else {
+    return(paste(aYear,'-12-31',sep=''))
+  }
+}
+
 
 cleanup <- which(siteInfo$Name == 'Warburton Airfield')
 siteInfo <- siteInfo[-cleanup,]
@@ -10,8 +28,6 @@ siteInfo[,'NamePerc'] <- paste(siteInfo$Name,' ',formatC((siteInfo$PercMaxTObs+s
 cols<-c('Year','JDay','Tmax','TMin')
 hours<-paste('Hour',seq(1,24),sep='_')
 cols<-c(cols,hours)
-
-
 
 f1 <- list(
   family = "Arial, sans-serif",
@@ -261,7 +277,13 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
   }
   JDays <- sJDay:lastJDay
 
-  today <- max(chill)
+  today <- max(chill[lastJDay])
+  todayDate <- format(EDATE,'%d %b %Y')
+  if(today > 0){
+    chillMessage <- paste("Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
+  } else {
+    chillMessage <- 'No Chill has accumulated'
+  }
 
   if(CHILLTYPE == 1){
     day34 <- jday[head(which(chill >= 34),1)]
@@ -298,15 +320,14 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
     if(sum(chill) > 0){
       p <- add_trace(p,y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)'))
     }
-      p <- layout(p,xaxis=a,yaxis=b,margin=margin)
+      p <- layout(p,xaxis=a,yaxis=b,margin=margin,title=chillMessage)
   } else {
     p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
                line=list(color='transparent'),showlegend = F)
     p <- add_trace(p,y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.2)')
     p <- add_trace(p,y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)'))
-    p <- layout(p,xaxis=a,yaxis=b,margin=margin)
+    p <- layout(p,xaxis=a,yaxis=b,margin=margin,title=chillMessage)
   }
-
 }
 
 
