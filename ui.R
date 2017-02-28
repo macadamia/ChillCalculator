@@ -59,6 +59,7 @@ shinyUI(
                   )
           ),
           tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
+<<<<<<< HEAD
                    fluidPage(
                      fluidRowUI("chillControls"),
                      fluidRow(
@@ -74,6 +75,23 @@ shinyUI(
                      )
                    )#fluidPage
           ),
+=======
+            fluidPage(
+              fluidRow(
+                column(width=2,
+                       radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
+                ),
+                column(width=3,
+                       #uiOutput("yearOutputChill"),
+                       radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
+                )
+              ),#fluidRow
+              fluidRow(
+                  plotlyOutput("chillPlot")
+              )
+            )#fluidPage
+        ),
+>>>>>>> parent of 8b330de... Chill Units still problematic
           tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),
               fluidPage(
                 fluidRowUI("gdhControls"),

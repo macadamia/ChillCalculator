@@ -26,9 +26,77 @@ shinyServer(function(input, output,session) {
 
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
+<<<<<<< HEAD
   callModule(fluidRowServer,"chillControls",selectedYear,currentYear,site,siteInfo)
   callModule(fluidRowServer,"gdhControls",selectedYear,currentYear,site,siteInfo)
   callModule(fluidRowServer,"tempControls",selectedYear,currentYear,site,siteInfo)
+=======
+  output$SelectedLocation <- renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
+    }
+  })
+
+  output$yearOutput <- renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+    }
+  })
+
+  checkDate <- function(aDate){
+    if(as.Date(aDate) < Sys.Date() ){
+      return(aDate)
+    } else {
+      return(paste(strsplit(aDate,'-')[[1]][1],'-01-01',sep=''))
+    }
+  }
+
+  checkDateEnd <- function(aDate){
+    aYear <- as.numeric(input$yearInput)
+    thisYear <- as.numeric(format(Sys.Date(),'%Y'))
+    if(aYear == thisYear){
+      return(Sys.Date()-1)
+    } else {
+      return(paste(aYear,'-12-31',sep=''))
+    }
+  }
+
+
+  output$dateStart <- renderUI({
+    if (is.null(input$yearInput)) {
+      return(NULL)
+    }
+    selectedYear$Year <- input$yearInput
+
+    if(input$tabs == 'Chill'){
+      if(input$cType == 3){
+        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+      } else {
+        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
+      }
+    }
+
+    if(input$tabs == 'Growing Degrees' ){
+      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+    }
+
+    if(input$tabs == 'Temperature'){
+      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
+    }
+
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
+    }
+  })
+
+  output$dateEnd <- renderUI({
+
+    if(input$tabs == 'Temperature'){
+      if (is.null(input$yearInput)) {
+        return(NULL) #dropbox not ready
+      }
+      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
+>>>>>>> parent of 8b330de... Chill Units still problematic
 
   # output$SelectedLocation <- renderUI({
   #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
@@ -111,8 +179,12 @@ shinyServer(function(input, output,session) {
        }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
+<<<<<<< HEAD
       cat(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,'startDate',input$startDate,'enddate',input$endDate,':\n')
       doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
+=======
+      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
+>>>>>>> parent of 8b330de... Chill Units still problematic
     }) #renderPlotly
   })#observe
 
@@ -123,7 +195,7 @@ shinyServer(function(input, output,session) {
         return(NULL) #sliders not ready
       }
       loadTheData()
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH)
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH)
     }) #renderPlotly
   })
 
