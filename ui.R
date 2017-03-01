@@ -6,6 +6,7 @@ library(plotly)
 library(shinysky)
 library(leaflet)
 
+#
 
 shinyUI(
 
@@ -14,6 +15,14 @@ shinyUI(
     tags$head(includeScript("google_analytics.js")),
 
     titlePanel(""),
+
+          fluidRow(
+            column(width=4, align = 'center',uiOutput("SelectedLocation")),
+            column(width=2, align = 'center',uiOutput("yearOutput")),
+            column(width=2, align = 'center',uiOutput("dateStart")),
+            column(width=2, align = 'center',uiOutput("dateEnd")),
+            column(width=2, align = 'center',uiOutput("baseTemp"))
+          ),
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",
                    h3('Introduction'),
@@ -33,13 +42,13 @@ shinyUI(
 
                    h3('Growing Degrees'),
                    helpText('Growing Degree Hours (GDH) (Anderson et al 1974) or Growing Degree Days (GDD) are calculated when the user selects the "Growing Degrees" tab. GDH are calculated using the methodology of Anderson et al. (1986) that uses four thresholds to calculate the accumulation of yield.
-                            GDD are calculated by subtracting 10ºC from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC.
-                            These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.'),
+                            GDD are calculated by subtracting 10ºC (or which ever base temperature is used) from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC.
+                            These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.')#,
 
-                   h3('Other Options'),
-                   helpText("The plot height can be controlled using the slider. It moves in 100-pixel steps and can set between 400 and 1200 pixels. The width is set as the width of the main panel.
-                            A jpeg of the image is created and downloaded to the user's computer when the download button is selected."),
-                    hr()
+                   # h3('Other Options'),
+                   # helpText("The plot height can be controlled using the slider. It moves in 100-pixel steps and can set between 400 and 1200 pixels. The width is set as the width of the main panel.
+                   #          A jpeg of the image is created and downloaded to the user's computer when the download button is selected."),
+                   #  hr()
           ),
           tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
@@ -47,9 +56,9 @@ shinyUI(
                        column(width=4,
                           selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
-                              htmlOutput("StationInfo"),
                               htmlOutput("NMatches"),
                               textInput("Town", label = h4("Search For Town"),value=''),
+                              htmlOutput("StationInfo"),
                               htmlOutput("NTowns")
                        ),
                        column(width=8,
@@ -59,49 +68,27 @@ shinyUI(
                   )
           ),
           tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
-<<<<<<< HEAD
-                   fluidPage(
-                     fluidRowUI("chillControls"),
-                     fluidRow(
-                       column(width=2,
-                              radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
-                       ),
-                       column(width=3,
-                              radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
-                       )
-                     ),#fluidRow
-                     fluidRow(
-                       plotlyOutput("chillPlot")
-                     )
-                   )#fluidPage
-          ),
-=======
             fluidPage(
               fluidRow(
                 column(width=2,
                        radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
                 ),
                 column(width=3,
-                       #uiOutput("yearOutputChill"),
                        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
                 )
               ),#fluidRow
               fluidRow(
-                  plotlyOutput("chillPlot")
+                plotlyOutput("chillPlot")
               )
             )#fluidPage
         ),
->>>>>>> parent of 8b330de... Chill Units still problematic
           tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),
               fluidPage(
-                fluidRowUI("gdhControls"),
                 fluidRow(
                   column(width=2,
-                         #uiOutput("yearOutputGDH"),
                          radioButtons("Y2DateGDH", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
                   ),
                   column(width=3,
-                         #uiOutput("dateForGDHOutput"),
                          radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
                   )
                 ),
@@ -112,7 +99,6 @@ shinyUI(
           ),
           tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
-                     fluidRowUI("tempControls"),
                      fluidRow(
                        plotlyOutput("TempPlot")
                      )
@@ -147,4 +133,3 @@ shinyUI(
         ) #tabset
   )#fluidPage
 )#shinyUI
-

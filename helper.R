@@ -2,25 +2,6 @@ siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
 
-checkDate <- function(aDate){
-  if(as.Date(aDate) < Sys.Date() ){
-    return(aDate)
-  } else {
-    return(paste(strsplit(aDate,'-')[[1]][1],'-01-01',sep=''))
-  }
-}
-
-checkDateEnd <- function(ayear){
-  aYear <- as.numeric(ayear)
-  thisYear <- as.numeric(format(Sys.Date(),'%Y'))
-  if(aYear == thisYear){
-    theDate <- Sys.Date()-1
-  } else {
-    theDate <- paste(aYear,'-12-31',sep='')
-  }
-  return(theDate)
-}
-
 
 cleanup <- which(siteInfo$Name == 'Warburton Airfield')
 siteInfo <- siteInfo[-cleanup,]
@@ -38,11 +19,14 @@ f1 <- list(
 
 a <- list(
   title = "Date",
+  type='date',
   titlefont = f1,
   tickfont = f1,
   showticklabels = TRUE,
   nticks= 20,
-  tickangle = 45
+  tickangle = 45,
+  tickformat = "%d %b",
+  hoverformat = "%d %b"
 )
 
 margin <- list(l=60, r=40,b=80,t= 40,pad=0)
@@ -201,19 +185,19 @@ calcLT <- function(tab.1,lat,sJDay){ # long-Term data
   return(ch)
 }
 
-#doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,3)
-doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE){
+#doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
+doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
 
-  YEAR<-2016
-  CHILLTYPE<-3
-  Y2DATE<-0
-  LOCATION<-317
-  STARTDATE<-as.Date('2016-6-1')
+  # YEAR<-2010
+  # CHILLTYPE<-3
+  # Y2DATE<-1
+  # LOCATION<-317
+  # STARTDATE<-as.Date('2016-5-1')
 
   Year <- as.numeric(YEAR)
-  sJDay<- as.numeric(format(STARTDATE,'%j'))
+  sJDay <- as.numeric(format(STARTDATE,'%j'))
+  eJDay <- as.numeric(format(EDATE,'%j'))
 
-  eJDay<-366
   if(CHILLTYPE == 1){
     YLAB='Chill Portions'
   }
@@ -245,17 +229,7 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE){
     chill <- chill[hour24]
 
   }
-  if(CHILLTYPE != 3){
-    if(sum(chill) <= 0){
-      aTitle <- paste("No Chill Accumulation Yet at",stnName)
-      return(NULL)
-    }
-  } else {
-    if(length(chill) < 1){
-      aTitle <- paste("No Chill Accumulation Yet at",stnName)
-      return(NULL)
-    }
-  }
+
 
   if(CHILLTYPE == 1){
     LTChill <- CP
@@ -271,15 +245,43 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE){
     LTChill <- CU
     LTHot <- CUHot
     LTCold <- CUCold
+
+    LTChillStart <- LTChill[sJDay]
+    LTHotStart <- LTHot[sJDay]
+    LTColdStart <- LTCold[sJDay]
+
+    chillStart <- head(chill,1)
   }
 
   lastJDay <- 365
   if(Y2DATE == 1){
-    lastJDay <- min(max(jday),lastJDay)
+    lastJDay <- min(max(jday),lastJDay,eJDay)
   }
-  JDays <- jday[sJDay:lastJDay]
+  JDays <- sJDay:lastJDay
 
-  today <- max(chill[lastJDay])
+
+  if(CHILLTYPE == 1){
+    day34 <- jday[head(which(chill >= 34),1)]
+    day34Date <- format(as.Date(paste(Year,day34,sep='-'),'%Y-%j'),'%d %b')
+    #equiv chill hours
+    eqCH <- CH[day34]
+  }
+
+  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+  if(CHILLTYPE != 3){
+    chill <- chill[sJDay:lastJDay]
+    LTHot <- LTHot[sJDay:lastJDay]
+    LTCold <- LTCold[sJDay:lastJDay]
+  } else {
+    nJdays <- length(seq(sJDay,lastJDay))
+    chill <- chill[1:nJdays]
+    chill <- chill - chillStart
+    LTHot <- LTHot[sJDay:lastJDay] - LTHot[sJDay]
+    LTCold <- LTCold[sJDay:lastJDay] - LTCold[sJDay]
+
+  }
+
+  today <- tail(chill,1)
   todayDate <- format(EDATE,'%d %b %Y')
   if(today > 0){
     chillMessage <- paste("Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
@@ -287,27 +289,8 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE){
     chillMessage <- 'No Chill has accumulated'
   }
 
-  if(CHILLTYPE == 1){
+  theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
 
-    day34 <- jday[head(which(chill >= 34),1)]
-    day34Date <- format(as.Date(paste(Year,day34,sep='-'),'%Y-%j'),'%d %b')
-    #equiv chill hours
-    eqCH <- CH[day34]
-  }
-
-  if(CHILLTYPE != 3){
-    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-    chill <- chill[sJDay:lastJDay]
-    LTHot <- LTHot[sJDay:lastJDay]
-    LTCold <- LTCold[sJDay:lastJDay]
-  } else {
-    nJdays <- length(seq(sJDay,lastJDay))
-    chill <- chill[1:nJdays]
-    LTHot <- LTHot[1:nJdays]
-    LTCold <- LTCold[1:nJdays]
-  }
-
-  data <- data.frame(JDays,labs, chill,LTHot,LTCold)
   b <- list(
     title = YLAB,
     titlefont = f1,
@@ -317,50 +300,28 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE){
   )
 
   if(CHILLTYPE != 3){
-    if(sum(chill) > 0){
-      p <- plot_ly(data, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
-                   line=list(color='transparent'),showlegend = F) %>%
-
-        add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.2)') %>%
-
-        add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
-
-
-        layout(xaxis=a,yaxis=b,margin=margin)
-    }
-<<<<<<< HEAD
-      p <- layout(p,xaxis=a,yaxis=b,margin=margin,title=chillMessage)
-  } else {
     p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
-               line=list(color='transparent'),showlegend = F)
-    p <- add_trace(p,y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.2)')
-    p <- add_trace(p,y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)'))
-    p <- layout(p,xaxis=a,yaxis=b,margin=margin,title=chillMessage)
-=======
+                 line=list(color='transparent'),showlegend = F) %>%
+    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+    add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
+    layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
   } else {
-    print(dim(data))
-    if(length(chill) > 1){
-      p <- plot_ly(data, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
-                   line=list(color='transparent'),showlegend = F) %>%
-
-        add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.2)') %>%
-
-        add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
-
-
-        layout(xaxis=a,yaxis=b,margin=margin)
-    }
->>>>>>> parent of 8b330de... Chill Units still problematic
+    plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+                 line=list(color='transparent'),showlegend = F)  %>%
+    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+    add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
+    layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
   }
 }
 
-
-doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE){
+#doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH,input$baseTemp)
+doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
 
   Year <- as.numeric(YEAR)
 
   sJDay<-as.numeric(format(SDATE,'%j'))
-  eJDay<-365
+  eJDay<-as.numeric(format(EDATE,'%j'))
+
 
   stn<-siteInfo$stnID[LOCATION]
   lat<-siteInfo$latitude[LOCATION]
@@ -388,13 +349,28 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE){
       gd <- gdh
 
     } else {
-      gdd <- cumsum(((tab.1[,'maxt'] + tab.1[,'mint']) / 2) - GDDb)
+      gTmp <- ((tab.1[,'maxt'] + tab.1[,'mint']) / 2) - as.numeric(BASETEMP)
+      gTmp[gTmp < 0] <- 0
+      gdd <- cumsum(gTmp)
       jday <- tab.1[,'day']
       gdd[ jday < sJDay] <- NA
       gd <- gdd - gdd[sJDay]
       maxGD <- max(gd,na.rm=T)
-      YLAB <- paste('Growing Degree Days (base =',GDDb,'ºC)')
+      YLAB <- paste('Growing Degree Days (base =',BASETEMP,'ºC)')
     }
+  }
+
+  if(as.numeric(BASETEMP) != GDDb & GTYPE == 2){ # GDD
+    tab.LT <- getMetLT(stn) # this is the long term data
+    #GDD
+    gdd <- (tab.LT[,'maxt'] + tab.LT[,'mint'])/2 - as.numeric(BASETEMP)
+    gdd[gdd < 0] <- 0
+    gddTab <- tapply(gdd,list(tab.LT[,'year'],tab.LT[,'day']),max)
+
+    gdd <- t(apply(gddTab,1,cumsum))
+    GDD <- colMeans(gdd)
+    GDDHot <- apply(gdd,2,quantile,probs=0.9,na.rm=T)
+    GDDCold <- apply(gdd,2,quantile,probs=0.1,na.rm=T)
   }
 
   if(GTYPE == 1) {
@@ -420,7 +396,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE){
 
   lastJDay <- 366
   if(Y2DATE == 1){
-    lastJDay <- min(max(jday),lastJDay)
+    lastJDay <- min(max(jday),lastJDay,eJDay)
   }
 
 
@@ -435,8 +411,8 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE){
 
   JDays <- sJDay:lastJDay
   labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-  data <- data.frame(JDays=JDays,date=labs,gd=gd[sJDay:lastJDay],LTGD=LTGD[sJDay:lastJDay],
-                     LTHot=LTHot[sJDay:lastJDay],LTCold=LTCold[sJDay:lastJDay])
+  theData <- data.frame(JDays=JDays,date=labs,gd=gd[sJDay:lastJDay],LTGD=LTGD[sJDay:lastJDay],
+                        LTHot=LTHot[sJDay:lastJDay],LTCold=LTCold[sJDay:lastJDay])
   b <- list(
     title = YLAB,
     titlefont = f1,
@@ -444,15 +420,16 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,LOCATION,Y2DATE){
     tickangle = 0,
     tickfont = f1
   )
-  p <- plot_ly(data, x = ~date, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+
+  p <- plot_ly(theData, x = ~date, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
                line=list(color='transparent'),showlegend = F) %>%
 
-    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.2)') %>%
+    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
 
     add_trace(y = ~gd,name='This Year',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
 
 
-    layout(xaxis=a,yaxis=b,margin=margin)
+    layout(xaxis=a,yaxis=b,margin=margin) #,plot_bgcolor="rgb(126,126,126)"
 
 }
 
@@ -491,10 +468,10 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE){
 
   JDays <- sJDay:eJDay
   labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-  data <- data.frame(date=labs,maxt=maxt[JDays],mint=mint[JDays],
-                     maxTlo=maxTCold[JDays],maxThi=maxTHot[JDays],
-                     minTlo=minTCold[JDays],minThi=minTHot[JDays],
-                     jdays=JDays)
+  theData <- data.frame(date=labs,maxt=maxt[JDays],mint=mint[JDays],
+                        maxTlo=maxTCold[JDays],maxThi=maxTHot[JDays],
+                        minTlo=minTCold[JDays],minThi=minTHot[JDays],
+                        jdays=JDays)
 
   b <- list(
     title = "Temperature (°C)",
@@ -503,15 +480,15 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE){
     tickangle = 0,
     tickfont = f1
   )
-  p <- plot_ly(data, x = ~date, y = ~maxThi,  type = "scatter", mode='lines',name='Top 10% Max T',
-    line=list(color='transparent'),showlegend = F) %>%
+  p <- plot_ly(theData, x = ~date, y = ~maxThi,  type = "scatter", mode='lines',name='Top 10% Max T',
+               line=list(color='transparent'),showlegend = F) %>%
 
-    add_trace(y = ~maxTlo,name='Low 10% Max T',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.2)') %>%
+    add_trace(y = ~maxTlo,name='Low 10% Max T',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
 
     add_trace(y = ~maxt,name='Max T',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
 
     add_trace(y = ~minThi,name='Top 10% Min T',showlegend = F,line=list(color='transparent')) %>%
-    add_trace(y = ~minTlo,name='Low 10% Min T',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.2)') %>%
+    add_trace(y = ~minTlo,name='Low 10% Min T',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
 
     add_trace(y = ~mint,name='Min T',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
 
@@ -532,25 +509,25 @@ getFName <- function(LOCATION,YEAR,CTYPE,GTYPE,TABNAME){
   paste(siteInfo$stnID[as.numeric(LOCATION)],YEAR,dataType,sep='_')
 }
 
-makePDF <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE){
+makePDF <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
   pdf(file='myGenerated.pdf',width=12,height=8)
-  doThePlot(YEAR,CHILLTYPE,LOCATION,Y2DATE)
+  doThePlot(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ)
   dev.off()
 }
 
-makeJPEG <- function(YEAR,CTYPE,GTYPE,LOCATION,Y2DATE,DATESTART,DATEEND,HEIGHT,TABS){
+makeJPEG <- function(YEAR,CTYPE,GTYPE,LOCATION,Y2DATE,DATESTART,DATEEND,HEIGHT,TABS,HQ){
   WIDTH = HEIGHT * 1200 / 800
   cat(HEIGHT,WIDTH,'\n')
   jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
   if(TABS == 'Growing Degrees') {
-    doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,Y2DATE)
+    doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,Y2DATE,HQ)
   }
   if(TABS == 'Chill'){
     startJDay <- as.numeric(format(DATESTART,'%j'))
-    doThePlot(YEAR,CTYPE,LOCATION,Y2DATE,DATESTART)
+    doThePlot(YEAR,CTYPE,LOCATION,Y2DATE,DATESTART,HQ)
   }
   if(TABS == 'Temperature'){
-    doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION)
+    doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION,1,HQ)
   }
 
   dev.off()

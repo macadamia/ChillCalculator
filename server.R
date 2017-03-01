@@ -5,9 +5,11 @@ library(shinysky)
 library(leaflet)
 library(plotly)
 
+source('helper.R')
+
 startTown <- which(siteInfo$Name == 'Applethorpe')
 
-shinyServer(function(input, output,session) {
+shinyServer(function(input, output) {
 
   site <- reactiveValues(currentlLoc=startTown,name='Applethorpe')
 
@@ -26,20 +28,13 @@ shinyServer(function(input, output,session) {
 
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
-<<<<<<< HEAD
-  callModule(fluidRowServer,"chillControls",selectedYear,currentYear,site,siteInfo)
-  callModule(fluidRowServer,"gdhControls",selectedYear,currentYear,site,siteInfo)
-  callModule(fluidRowServer,"tempControls",selectedYear,currentYear,site,siteInfo)
-=======
   output$SelectedLocation <- renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
-    }
+    HTML(paste("<br/><h3>",siteInfo$Name[site$currentLoc],"</h3>"))
   })
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Select Year for Plots'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
     }
   })
 
@@ -51,7 +46,7 @@ shinyServer(function(input, output,session) {
     }
   }
 
-  checkDateEnd <- function(aDate){
+  checkDateEnd <- function(aDate){  # this function is not quite right
     aYear <- as.numeric(input$yearInput)
     thisYear <- as.numeric(format(Sys.Date(),'%Y'))
     if(aYear == thisYear){
@@ -91,75 +86,32 @@ shinyServer(function(input, output,session) {
 
   output$dateEnd <- renderUI({
 
-    if(input$tabs == 'Temperature'){
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
       if (is.null(input$yearInput)) {
         return(NULL) #dropbox not ready
       }
       dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
->>>>>>> parent of 8b330de... Chill Units still problematic
+    }
+  })
 
-  # output$SelectedLocation <- renderUI({
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     HTML(paste("<br/><b>",siteInfo$Name[site$currentLoc],"</b>"))
-  #   }
-  # })
-  #
-  # output$yearOutput <- renderUI({
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
-  #   }
-  # })
-  # output$dateStart <- renderUI({
-  #   if (is.null(input$yearInput)) {
-  #     return(NULL)
-  #   }
-  #   selectedYear$Year <- input$yearInput
-  #
-  #   if(input$tabs == 'Chill'){
-  #     if(input$cType == 3){
-  #       value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
-  #     } else {
-  #       value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
-  #     }
-  #   }
-  #
-  #   if(input$tabs == 'Growing Degrees' ){
-  #     value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
-  #   }
-  #
-  #   if(input$tabs == 'Temperature'){
-  #     value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
-  #   }
-  #
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
-  #   }
-  # })
-  #
-  #
-  # output$dateEnd <- renderUI({
-  #
-  #   if( input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     if (is.null(input$yearInput)) {
-  #       return(NULL) #dropbox not ready
-  #     }
-  #     dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
-  #
-  #   }
-  # })
+  output$baseTemp <- renderUI({
+    if(input$tabs == 'Growing Degrees'){
+      textInput('baseTemp',h4("Base Temperature (ºC)"),"10",'150px')
+    }
+  })
 
 
-  # output$downloadJPEG <- renderUI({
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     downloadButton("outputJPEG", "Download JPEG")
-  #   }
-  # })
+  output$downloadJPEG <- renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      downloadButton("outputJPEG", "Download JPEG")
+    }
+  })
 
-  # output$sliderForHeight <-renderUI({
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
-  #   }
-  # })
+  output$sliderForHeight <-renderUI({
+    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+      sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
+    }
+  })
 
   loadTheData <- function() {
     if(is.null(site$currentLoc)){
@@ -174,18 +126,13 @@ shinyServer(function(input, output,session) {
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlotly({
-       if (is.null(input$startDate) | is.null(input$startDate)) {
-         return(NULL)
-       }
+      if (is.null(input$yearInput) | is.null(input$startDate)) {
+        return(NULL) #slider not ready
+      }
       loadTheData()
       startJDay <- as.numeric(format(input$startDate,'%j'))
-<<<<<<< HEAD
-      cat(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,'startDate',input$startDate,'enddate',input$endDate,':\n')
       doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
-=======
-      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
->>>>>>> parent of 8b330de... Chill Units still problematic
-    }) #renderPlotly
+    }) #renderPlot
   })#observe
 
   ### GDH Plot ###
@@ -195,18 +142,18 @@ shinyServer(function(input, output,session) {
         return(NULL) #sliders not ready
       }
       loadTheData()
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,site$currentLoc,input$Y2DateGDH)
-    }) #renderPlotly
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH,input$baseTemp)
+
+    }) #renderPlot
   })
 
-  ### Temperature Plot ###
 
   output$TempPlot <- renderPlotly({
     if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
       return(NULL) #sliders not ready
     }
     loadTheData()
-    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1) #input$Y2DateTemp,3)
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1)
   })
 
 
@@ -333,16 +280,17 @@ shinyServer(function(input, output,session) {
     }
     text<-paste("Lattitude ", click$lat, "Longtitude ", click$lng)
     rowNumber <- which(siteInfo$stnID == click$id)
-    site$currentLoc <- rowNumber
     text2<-paste("You've selected point", click$id,'at row #',rowNumber)
     perc <- (siteInfo$PercMaxTObs[rowNumber]+siteInfo$PercMinTObs[rowNumber])/2*100
     warning <- ''
     if(perc < 0.5) {
       warning <- '<b>Warning:</b>'
+      output$StationInfo <- renderUI({
+        HTML(paste(warning,siteInfo$Name[rowNumber],'recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/>',sep=' '))
+      })
     }
-    output$StationInfo <- renderUI({
-      HTML(paste(warning,'You have selected:<b>',siteInfo$Name[rowNumber],'</b><br/> Which recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/><br/>',sep=' '))
-    })
+    #print(text2)
+    site$currentLoc <- rowNumber
     # output$Click_text<-renderText({
     #   text2
     # })
@@ -353,7 +301,7 @@ shinyServer(function(input, output,session) {
   #     paste(currentFN(),'pdf',sep='.')
   #   },
   #   content=function(file) {
-  #     makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date)
+  #     makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date,2)
   #     file.copy(from = "myGenerated.pdf", to = file)
   #   }
   # )
@@ -363,7 +311,7 @@ shinyServer(function(input, output,session) {
       paste(currentFN(),'jpg',sep='.')
       },
     content=function(file) {
-      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs)
+      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
       file.copy(from = "myGenerated.jpg", to = file)
     }
   )
