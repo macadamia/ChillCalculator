@@ -28,7 +28,7 @@ shinyUI(
                    h3('Introduction'),
                    helpText('This site accesses daily weather station data for the period 1968 to the current day for 600 stations. This is used to make calculations for chilling requirements and heating.
                             Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions, Chill Units or Chill Hours.
-                            All calculations are performed using the chillR package of Luedeling et al. (2013).'),
+                            All calculations are performed using the chillR package of Luedeling et al. (2013) & Luedeling (2017).'),
 
                    h3('Where and When'),
                    helpText('There are 600 locations in the database which can be selected from the Locations tab. The map is zoomable and pannable in the normal way. Select a station by clicking the marker and selecting with Chill or GDH to see the data. Initially the map is zoomed to the Granite Belt.'),
@@ -115,6 +115,7 @@ shinyUI(
                       helpText("Erez A, Fishman S, Linsley-Noakes GC, Allan P (1990). The dynamic model for rest completion in peach buds. Acta Hortic 276, 165-174"),
                       helpText('Ghariani, K. and R. L. Stebbins (1994). Chilling requirements of apple and pear cultivars. Fruit Varieties Journal 48: 215.'),
                       helpText("Luedeling E, Kunz A and Blanke M, 2013. Identification of chilling and heat requirements of cherry trees - a statistical approach. International Journal of Biometeorology 57,679-689."),
+                      helpText("Luedeling, E., 2017. chillR: Statistical methods for phenology analysis in temperate fruit trees. R package version 0.66, URL http://cran.r-project.org/web/packages/chillR/."),
                       helpText("Richardson EA, Seeley SD, Walker DR (1974) A model for estimating the completion of rest for Redhaven and Elberta peach trees. HortScience 9(4), 331-332"),
                       helpText("Weinberger JH (1950) Chilling requirements of peach varieties. Proc Am Soc Hortic Sci 56, 122-128")
                      )
