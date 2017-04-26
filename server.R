@@ -162,9 +162,6 @@ shinyServer(function(input, output) {
 
 
   output$map <- renderLeaflet({
-    # if (is.null(input$yearInput)) {
-    #   return(NULL) #slider not ready
-    # }
     zoom <- 9
     if(input$Region == "1"){
       #granite belt
@@ -208,29 +205,22 @@ shinyServer(function(input, output) {
 
     searchResults <- results()
     if(!is.null(searchResults)){
-      if(length(searchResults) == 2) {
-        #just the count of matches
-        textIs <- HTML(paste('There <b>',searchResults$N,'</b>possible Locations'))
-        if(searchResults$N <= 10){
-          first <- T
-          textIs <- HTML(paste('There <b>',searchResults$N,'</b>possible Locations<br/>'))
-          for(i in searchResults$these){
-            if(first){
-              first <- F
-              textIs <- HTML(paste(textIs,siteInfo$Name[i],sep='<br/>'))
-            } else {
-              textIs <-HTML(paste(textIs,siteInfo$Name[i],sep='<br/>'))
-            }
+        theList <- pairlist()
+        pattern <- "([[:space:]]?)([[:punct:]]?)"
+        print(length(searchResults$these))
+        for(i in searchResults$these){
+          if(!is.na(siteInfo$Name[i])){
+            cleanName <- gsub(pattern,'',siteInfo$Name[i])
+            eval(parse(text=paste('theList$',cleanName,'<-',i,sep='')))
           }
         }
-        output$NMatches <- renderUI({
-          textIs
-        })
-      }
+        if(!is.null(theList)){
+          output$BuildStnLocations <- renderUI({
+            selectInput("stnFound", label = h4("Select Station"),choices = theList, size = 10, selectize = F)
+          })
+        }
+
       if(length(searchResults) == 3) {
-        output$NMatches <- renderUI({
-          HTML(paste('Found',searchResults$searchedSite,'<br/>Click Marker to Select it'))
-        })
         rlng <- searchResults$searchedLng
         rlat <- searchResults$searchedLat
         zoom <- 12
@@ -273,6 +263,11 @@ shinyServer(function(input, output) {
       setView(lng = rlng, lat = rlat, zoom = zoom)
   })
 
+  observe ({
+    this <- as.numeric(input$stnFound)
+    cat(siteInfo$Name[this],siteInfo$latitude[this]+27,siteInfo$longitude[this],'\n')
+    site$currentLoc <- this
+  })
   observe({
     click<-input$map_marker_click
     if(is.null(click)){
