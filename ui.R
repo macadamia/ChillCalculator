@@ -57,10 +57,11 @@ shinyUI(
                           selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
                               #htmlOutput("NMatches"),
-                              uiOutput("BuildStnLocations"),
-                              textInput("Town", label = h4("Search For Town"),value=''),
+                              #uiOutput("BuildStnLocations"),
+                              selectInput("stnFound",label = h4("Select Station"),choices ="Applethorpe",size=10,selectize=F),
+                              textInput("Town", label = h4("Town Starts With..."),value=''),
                               htmlOutput("StationInfo"),
-                              htmlOutput("NTowns")
+                              uiOutput("NTowns")
                        ),
                        column(width=8,
                               leafletOutput("map", width='600px',height='600px' )

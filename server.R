@@ -7,11 +7,12 @@ library(plotly)
 
 source('helper.R')
 
-startTown <- which(siteInfo$Name == 'Applethorpe')
+startStn <- which(siteInfo$Name == 'Applethorpe')
+startTown <- which(gaz$PlaceName == 'Applethorpe')
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output,session) {
 
-  site <- reactiveValues(currentlLoc=startTown,name='Applethorpe')
+  site <- reactiveValues(currentlLoc=startStn,name='Applethorpe')
 
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))
 
@@ -29,6 +30,9 @@ shinyServer(function(input, output) {
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
   output$SelectedLocation <- renderUI({
+    if(is.null(site$currentLoc)){
+      site$currentLoc <- startStn
+    }
     HTML(paste("<br/><h3>",siteInfo$Name[site$currentLoc],"</h3>"))
   })
 
@@ -115,7 +119,7 @@ shinyServer(function(input, output) {
 
   loadTheData <- function() {
     if(is.null(site$currentLoc)){
-      site$currentLoc <- startTown
+      site$currentLoc <- startStn
     }
     stn<-siteInfo$stnID[site$currentLoc]
     rdata <- file.path('Data',paste(stn,'.RData',sep=''))
@@ -126,7 +130,7 @@ shinyServer(function(input, output) {
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate)) {
+      if (is.null(input$yearInput) | is.null(input$startDate | is.null(site$currentLoc))) {
         return(NULL) #slider not ready
       }
       loadTheData()
@@ -138,7 +142,7 @@ shinyServer(function(input, output) {
   ### GDH Plot ###
   observe({
     output$GDHPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate)) {
+      if (is.null(input$yearInput) | is.null(input$startDate | is.null(site$currentLoc))) {
         return(NULL) #sliders not ready
       }
       loadTheData()
@@ -149,7 +153,7 @@ shinyServer(function(input, output) {
 
 
   output$TempPlot <- renderPlotly({
-    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate)) {
+    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate) | is.null(site$currentLoc)) {
       return(NULL) #sliders not ready
     }
     loadTheData()
@@ -176,28 +180,28 @@ shinyServer(function(input, output) {
       rlat <- siteInfo$latitude[mtch]
     }
     if(input$Region == "3"){
-      #NSW
+      #Victoria
       mtch <- match('Kilmore Gap',siteInfo$Name)
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
       zoom <- 8
     }
     if(input$Region == "4"){
-      #NSW
+      #TAS
       mtch <- match('Hobart Airport',siteInfo$Name)
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
       zoom <- 9
     }
     if(input$Region == "5"){
-      #NSW
-      mtch <- match('Mount Barker',siteInfo$Name)
+      #SA
+      mtch <- 208
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
       zoom <- 10
     }
     if(input$Region == "6"){
-      #NSW
+      #WA
       mtch <- match('Manjimup',siteInfo$Name)
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
@@ -205,56 +209,50 @@ shinyServer(function(input, output) {
 
     searchResults <- results()
     if(!is.null(searchResults)){
-        theList <- pairlist()
-        pattern <- "([[:space:]]?)([[:punct:]]?)"
-        print(length(searchResults$these))
-        for(i in searchResults$these){
-          if(!is.na(siteInfo$Name[i])){
-            cleanName <- gsub(pattern,'',siteInfo$Name[i])
-            eval(parse(text=paste('theList$',cleanName,'<-',i,sep='')))
-          }
-        }
-        if(!is.null(theList)){
-          output$BuildStnLocations <- renderUI({
-            selectInput("stnFound", label = h4("Select Station"),choices = theList, size = 10, selectize = F)
-          })
+        # theList <- pairlist()
+        # pattern <- "([[:space:]]?)([[:punct:]]?)"
+        # #print(length(searchResults$these))
+        # for(i in searchResults$these){
+        #   if(!is.na(siteInfo$Name[i])){
+        #     cleanName <- gsub(pattern,'',siteInfo$Name[i])
+        #     eval(parse(text=paste('theList$',cleanName,'<-',i,sep='')))
+        #   }
+        # }
+        x <- siteInfo$Name[searchResults$these]
+        if(!is.null(x)){
+        updateSelectInput(session, "stnFound",
+                          label =  "Select Station",
+                          choices = x,
+                          selected = head(x, 1)
+        )
+          # output$BuildStnLocations <- renderUI({
+          #   selectInput("stnFound", label = h4("Select Station"),choices = theList, size = 10, selectize = F, selected = startStn)
+          # })
+
         }
 
-      if(length(searchResults) == 3) {
-        rlng <- searchResults$searchedLng
-        rlat <- searchResults$searchedLat
-        zoom <- 12
-      }
+      # if(length(searchResults) == 3) {
+      #   rlng <- searchResults$searchedLng
+      #   rlat <- searchResults$searchedLat
+      #   zoom <- 12
+      # }
     }
 
     searchTowns <- towns()
-    if(!is.null(searchTowns)){
-      if(length(searchTowns) == 2) {
-        #just the count of matches
-        textIs2 <- HTML(paste('There <b>',searchTowns$N,'</b>possible Towns'))
-        if(searchTowns$N <= 25){
-          first <- T
-          textIs2 <- HTML(paste('There <b>',searchTowns$N,'</b>possible Towns<br/>'))
-          for(i in searchTowns$these){
-            if(first){
-              first <- F
-              textIs2 <- HTML(paste(textIs2,gaz$PlaceStatePostCode[i],sep='<br/>'))
-            } else {
-              textIs2 <-HTML(paste(textIs2,gaz$PlaceStatePostCode[i],sep='<br/>'))
-            }
-          }
+    if(!is.null(searchTowns) & length(searchTowns$these) < 100){
+      theTownList <- pairlist()
+      pattern <- "([[:space:]]?)([[:punct:]]?)"
+      for(i in searchTowns$these){
+        if(!is.na(gaz$PlaceName[i])){
+          cleanName <- gsub(pattern,'',gaz$PlaceStatePostCode[i])
+          cleanName <- gaz$PlaceStatePostCode[i]
+          eval(parse(text=paste('theTownList$',cleanName,'<-',i,sep='')))
         }
-        output$NTowns <- renderUI({
-          textIs2
-        })
       }
-      if(length(searchTowns) == 3) {
+      if(!is.null(theTownList)){
         output$NTowns <- renderUI({
-          HTML(paste('Found',searchTowns$searchedSite,'<br/>Select nearby location to Select it'))
+          selectInput("townFound", label = h4("Select Town"),choices = theTownList, size = 10, selectize = F, selected = startTown)
         })
-        rlng <- searchTowns$searchedLng
-        rlat <- searchTowns$searchedLat
-        zoom <- 12
       }
     }
     leaflet(data = siteInfo) %>%
@@ -263,10 +261,32 @@ shinyServer(function(input, output) {
       setView(lng = rlng, lat = rlat, zoom = zoom)
   })
 
-  observe ({
+  observeEvent ( input$stnFound, {
+    if (is.null(input$stnFound)) {
+      return(NULL)
+    }
     this <- as.numeric(input$stnFound)
-    cat(siteInfo$Name[this],siteInfo$latitude[this]+27,siteInfo$longitude[this],'\n')
+    #cat(this, siteInfo$Name[this],siteInfo$latitude[this],siteInfo$longitude[this],'\n')
     site$currentLoc <- this
+    rlat <- siteInfo$latitude[this]
+    rlng <- siteInfo$longitude[this]
+    proxy <- leafletProxy("map")
+    proxy %>% setView(lng=rlng, lat=rlat, zoom = 9)
+
+  })
+
+  observeEvent ( input$townFound, {
+    if (is.null(input$townFound)) {
+      return(NULL)
+    }
+    this <- as.numeric(input$townFound)
+    #cat(this, gaz$PlaceName[this],gaz$latitude[this],gaz$longitude[this],'\n')
+    #site$currentLoc <- this
+    rlat <- gaz$Latitude[this]
+    rlng <- gaz$Longitude[this]
+    proxy <- leafletProxy("map")
+    proxy %>% setView(lng=rlng, lat=rlat, zoom = 9)
+
   })
   observe({
     click<-input$map_marker_click
@@ -284,11 +304,7 @@ shinyServer(function(input, output) {
         HTML(paste(warning,siteInfo$Name[rowNumber],'recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/>',sep=' '))
       })
     }
-    #print(text2)
     site$currentLoc <- rowNumber
-    # output$Click_text<-renderText({
-    #   text2
-    # })
   })
 
   # output$outputPDF <- downloadHandler(
@@ -314,3 +330,33 @@ shinyServer(function(input, output) {
 
 })
 
+#
+# if (interactive()) {
+#
+#   ui <- fluidPage(
+#     p("The checkbox group controls the select input"),
+#     checkboxGroupInput("inCheckboxGroup", "Input checkbox",
+#                        c("Item A", "Item B", "Item C")),
+#     selectInput("inSelect", "Select input",
+#                 c("Item Nuffink"))
+#   )
+#
+#   server <- function(input, output, session) {
+#     observe({
+#       x <- input$inCheckboxGroup
+#       print(x)
+#       # Can use character(0) to remove all choices
+#       if (is.null(x))
+#         x <- character(0)
+#
+#       # Can also set the label and select items
+#       updateSelectInput(session, "inSelect",
+#                         label = paste("Select input label", length(x)),
+#                         choices = x,
+#                         selected = tail(x, 1)
+#       )
+#     })
+#   }
+#
+#   shinyApp(ui, server)
+# }

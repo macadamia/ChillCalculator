@@ -2,6 +2,15 @@ siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
 
+gaz$PlaceName <- as.character(gaz$PlaceName)
+
+starts_with <- function(vars, match, ignore.case = TRUE) {
+  if (ignore.case) match <- tolower(match)
+  n <- nchar(match)
+
+  if (ignore.case) vars <- tolower(vars)
+  substr(vars, 1, n) == match
+}
 
 cleanup <- which(siteInfo$Name == 'Warburton Airfield')
 siteInfo <- siteInfo[-cleanup,]
@@ -35,7 +44,7 @@ searchForLocation <- function(location){
   #listOfStns
   this <- grep(tolower(location),tolower(siteInfo$Name),fixed = T)
   if(length(this) == 1){
-    return(list(searchedSite=siteInfo$Name[this],searchedLat=siteInfo$latitude[this],searchedLng=siteInfo$longitude[this]))
+    return(list(searchedSite=siteInfo$Name[this],searchedLat=siteInfo$latitude[this],searchedLng=siteInfo$longitude[this], these=this))
   }
   if(length(this) < 1){
     return(NULL)
@@ -46,12 +55,15 @@ searchForLocation <- function(location){
 }
 
 searchForPlace<- function(location){
-  #listOfStns
-  this <- grep(tolower(location),tolower(gaz$PlaceStatePostCode),fixed = T)
+  #listOfTowns
+  #print(location)
+  this <- which(starts_with(gaz$PlaceName,location))
+  #cat('this is',length(this),'\n')
   if(length(this) == 1){
-    return(list(searchedSite=gaz$PlaceStatePostCode[this],searchedLat=gaz$Latitude[this],searchedLng=gaz$Longitude[this]))
+    return(list(searchedSite=gaz$PlaceStatePostCode[this],searchedLat=gaz$Latitude[this],searchedLng=gaz$Longitude[this],these=this))
   }
   if(length(this) < 1){
+    print('nothing')
     return(NULL)
   }
   if(length(this) > 1){
