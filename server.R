@@ -33,7 +33,11 @@ shinyServer(function(input, output,session) {
     if(is.null(site$currentLoc)){
       site$currentLoc <- startStn
     }
-    HTML(paste("<br/><h3>",siteInfo$Name[site$currentLoc],"</h3>"))
+    if(is.na(siteInfo$Name[site$currentLoc])){
+      HTML(paste("<br/>Select a Location"))
+    } else {
+     HTML(paste("<br/><h3>",siteInfo$Name[site$currentLoc],"</h3>"))
+    }
   })
 
   output$yearOutput <- renderUI({
@@ -209,33 +213,15 @@ shinyServer(function(input, output,session) {
 
     searchResults <- results()
     if(!is.null(searchResults)){
-        # theList <- pairlist()
-        # pattern <- "([[:space:]]?)([[:punct:]]?)"
-        # #print(length(searchResults$these))
-        # for(i in searchResults$these){
-        #   if(!is.na(siteInfo$Name[i])){
-        #     cleanName <- gsub(pattern,'',siteInfo$Name[i])
-        #     eval(parse(text=paste('theList$',cleanName,'<-',i,sep='')))
-        #   }
-        # }
+
         x <- siteInfo$Name[searchResults$these]
         if(!is.null(x)){
-        updateSelectInput(session, "stnFound",
-                          label =  "Select Station",
-                          choices = x,
-                          selected = head(x, 1)
-        )
-          # output$BuildStnLocations <- renderUI({
-          #   selectInput("stnFound", label = h4("Select Station"),choices = theList, size = 10, selectize = F, selected = startStn)
-          # })
-
+          updateSelectInput(session, "stnFound",
+                            label =  "Select Station",
+                            choices = x,
+                            selected = head(x, 1)
+          )
         }
-
-      # if(length(searchResults) == 3) {
-      #   rlng <- searchResults$searchedLng
-      #   rlat <- searchResults$searchedLat
-      #   zoom <- 12
-      # }
     }
 
     searchTowns <- towns()
@@ -317,46 +303,16 @@ shinyServer(function(input, output,session) {
   #   }
   # )
 
-  output$outputJPEG <- downloadHandler(
-    filename = function() {
-      paste(currentFN(),'jpg',sep='.')
-      },
-    content=function(file) {
-      makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
-      file.copy(from = "myGenerated.jpg", to = file)
-    }
-  )
+  # output$outputJPEG <- downloadHandler(
+  #   filename = function() {
+  #     paste(currentFN(),'jpg',sep='.')
+  #     },
+  #   content=function(file) {
+  #     makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
+  #     file.copy(from = "myGenerated.jpg", to = file)
+  #   }
+  # )
 
 
 })
 
-#
-# if (interactive()) {
-#
-#   ui <- fluidPage(
-#     p("The checkbox group controls the select input"),
-#     checkboxGroupInput("inCheckboxGroup", "Input checkbox",
-#                        c("Item A", "Item B", "Item C")),
-#     selectInput("inSelect", "Select input",
-#                 c("Item Nuffink"))
-#   )
-#
-#   server <- function(input, output, session) {
-#     observe({
-#       x <- input$inCheckboxGroup
-#       print(x)
-#       # Can use character(0) to remove all choices
-#       if (is.null(x))
-#         x <- character(0)
-#
-#       # Can also set the label and select items
-#       updateSelectInput(session, "inSelect",
-#                         label = paste("Select input label", length(x)),
-#                         choices = x,
-#                         selected = tail(x, 1)
-#       )
-#     })
-#   }
-#
-#   shinyApp(ui, server)
-# }

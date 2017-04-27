@@ -200,11 +200,12 @@ calcLT <- function(tab.1,lat,sJDay){ # long-Term data
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
 doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
 
-  # YEAR<-2010
-  # CHILLTYPE<-3
-  # Y2DATE<-1
-  # LOCATION<-317
-  # STARTDATE<-as.Date('2016-5-1')
+  YEAR<-2010
+  CHILLTYPE<-3
+  Y2DATE<-1
+  LOCATION<-317
+  STARTDATE<-as.Date('2016-5-1')
+  EDATE<-as.Date('2016-9-1')
 
   Year <- as.numeric(YEAR)
   sJDay <- as.numeric(format(STARTDATE,'%j'))
@@ -241,7 +242,6 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
     chill <- chill[hour24]
 
   }
-
 
   if(CHILLTYPE == 1){
     LTChill <- CP
