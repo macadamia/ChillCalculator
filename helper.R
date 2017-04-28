@@ -200,12 +200,12 @@ calcLT <- function(tab.1,lat,sJDay){ # long-Term data
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
 doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
 
-  YEAR<-2010
-  CHILLTYPE<-3
-  Y2DATE<-1
-  LOCATION<-317
-  STARTDATE<-as.Date('2016-5-1')
-  EDATE<-as.Date('2016-9-1')
+  # YEAR<-2010
+  # CHILLTYPE<-3
+  # Y2DATE<-1
+  # LOCATION<-317
+  # STARTDATE<-as.Date('2016-5-1')
+  # EDATE<-as.Date('2016-9-1')
 
   Year <- as.numeric(YEAR)
   sJDay <- as.numeric(format(STARTDATE,'%j'))
@@ -224,6 +224,8 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
   stn<-siteInfo$stnID[LOCATION]
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
+
+  cat('loading',stnName,'\n')
 
   rdata <- file.path('Data',paste(stn,'.RData',sep=''))
   load(rdata)
@@ -504,7 +506,7 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE){
 
     add_trace(y = ~mint,name='Min T',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
 
-    layout(xaxis=a,yaxis=b,margin=margin)
+    layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest')
 
 }
 

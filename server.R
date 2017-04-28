@@ -134,7 +134,7 @@ shinyServer(function(input, output,session) {
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate | is.null(site$currentLoc))) {
+      if (is.null(input$yearInput) | is.null(input$startDate) | is.null(site$currentLoc)) {
         return(NULL) #slider not ready
       }
       loadTheData()
@@ -146,8 +146,11 @@ shinyServer(function(input, output,session) {
   ### GDH Plot ###
   observe({
     output$GDHPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate | is.null(site$currentLoc))) {
+      if (is.null(input$yearInput) | is.null(input$startDate) | is.null(site$currentLoc)) {
         return(NULL) #sliders not ready
+      }
+      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(site$currentLoc) | is.null(input$Y2DateGDH) | is.null(input$baseTemp )){
+        return(NULL)
       }
       loadTheData()
       doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH,input$baseTemp)
@@ -212,32 +215,35 @@ shinyServer(function(input, output,session) {
     }
 
     searchResults <- results()
+
     if(!is.null(searchResults)){
 
         x <- siteInfo$Name[searchResults$these]
-        if(!is.null(x)){
-          updateSelectInput(session, "stnFound",
-                            label =  "Select Station",
-                            choices = x,
-                            selected = head(x, 1)
-          )
+        bunchOfInts <- seq(1,length(x))
+
+        stnList <- list()
+        for(i in seq(1,length(searchResults$these))){
+          stnList[x[i]] = searchResults$these[i]
+        }
+        if(!is.null(stnList)){
+          output$BuildStnLocations <- renderUI({
+            selectInput("stnFound", label = h4("Select Station"),choices = stnList, size = 10, selectize = F,selected = startStn)
+          })
         }
     }
 
     searchTowns <- towns()
-    if(!is.null(searchTowns) & length(searchTowns$these) < 100){
-      theTownList <- pairlist()
-      pattern <- "([[:space:]]?)([[:punct:]]?)"
-      for(i in searchTowns$these){
-        if(!is.na(gaz$PlaceName[i])){
-          cleanName <- gsub(pattern,'',gaz$PlaceStatePostCode[i])
-          cleanName <- gaz$PlaceStatePostCode[i]
-          eval(parse(text=paste('theTownList$',cleanName,'<-',i,sep='')))
-        }
+    if(!is.null(searchTowns) & length(searchTowns$these) < 200){
+      x <- gaz$PlaceStatePostCode[searchTowns$these]
+      bunchOfInts <- seq(1,length(x))
+
+      theTownList <- list()
+      for(i in seq(1,length(searchTowns$these))){
+        theTownList[x[i]] = searchTowns$these[i]
       }
       if(!is.null(theTownList)){
         output$NTowns <- renderUI({
-          selectInput("townFound", label = h4("Select Town"),choices = theTownList, size = 10, selectize = F, selected = startTown)
+          selectInput("townFound", label = h4("Select Town"),choices = theTownList, size = 10, selectize = F,selected=startTown)
         })
       }
     }
@@ -248,11 +254,7 @@ shinyServer(function(input, output,session) {
   })
 
   observeEvent ( input$stnFound, {
-    if (is.null(input$stnFound)) {
-      return(NULL)
-    }
     this <- as.numeric(input$stnFound)
-    #cat(this, siteInfo$Name[this],siteInfo$latitude[this],siteInfo$longitude[this],'\n')
     site$currentLoc <- this
     rlat <- siteInfo$latitude[this]
     rlng <- siteInfo$longitude[this]
@@ -266,8 +268,7 @@ shinyServer(function(input, output,session) {
       return(NULL)
     }
     this <- as.numeric(input$townFound)
-    #cat(this, gaz$PlaceName[this],gaz$latitude[this],gaz$longitude[this],'\n')
-    #site$currentLoc <- this
+
     rlat <- gaz$Latitude[this]
     rlng <- gaz$Longitude[this]
     proxy <- leafletProxy("map")
@@ -316,3 +317,7 @@ shinyServer(function(input, output,session) {
 
 })
 
+# aList <- list()
+# for(i in 1:nrow(siteInfo)){
+#   aList[siteInfo$Name[i]] = i
+# }
