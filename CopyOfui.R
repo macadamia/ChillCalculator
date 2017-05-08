@@ -25,17 +25,40 @@ shinyUI(
           ),
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",
-            includeHTML('HowToUse.html')
+                   h3('Introduction'),
+                   helpText('This site accesses daily weather station data for the period 1968 to the current day for 600 stations. This is used to make calculations for chilling requirements and heating.
+                            Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions, Chill Units or Chill Hours.
+                            All calculations are performed using the chillR package of Luedeling et al. (2013) & Luedeling (2017).'),
+
+                   h3('Where and When'),
+                   helpText('There are 600 locations in the database which can be selected from the Locations tab. The map is zoomable and pannable in the normal way. Select a station by clicking the marker and selecting with Chill or GDH to see the data. Initially the map is zoomed to the Granite Belt.'),
+                   helpText('Years from 1968 to the present day can be chosen. The latest weather day is
+                            available after about midday (AEST) and is current then up to yesterday. The Year To Date option is useful during the current year when one wants to concentrate on
+                            the progress of the chill or heat accumulation for the most recent period. Data are displayed with the long-term average, and the warmest and coolest years.
+                            data from 1981 to 2010 are used for the long-term averages etc.'),
+
+                   h3('Chill Accumulation'),
+                   helpText('Chilling can be calculated in either Chill Portions (Erez et al. 1990), Chill Hours (Bennet 1949, Weinberger 1950) or Chill Units (Richardson et al. 1974).'),
+
+                   h3('Growing Degrees'),
+                   helpText('Growing Degree Hours (GDH) (Anderson et al 1974) or Growing Degree Days (GDD) are calculated when the user selects the "Growing Degrees" tab. GDH are calculated using the methodology of Anderson et al. (1986) that uses four thresholds to calculate the accumulation of yield.
+                            GDD are calculated by subtracting 10ºC (or which ever base temperature is used) from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC.
+                            These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.'),
+                   helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2017.")
+                   # h3('Other Options'),
+                   # helpText("The plot height can be controlled using the slider. It moves in 100-pixel steps and can set between 400 and 1200 pixels. The width is set as the width of the main panel.
+                   #          A jpeg of the image is created and downloaded to the user's computer when the download button is selected."),
+                   #  hr()
           ),
           tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 0),
                    fluidPage(
                      fluidRow(
                        column(width=4,
-                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Yarra Valley" = 3, 'Tas' = 4, 'SA' = 5, 'southern WA' = 6), selected = 1),
+                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tas' = 4, 'SA' = 5, 'WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
                               #htmlOutput("NMatches"),
-                              uiOutput("BuildStnLocations"),
-                              #selectInput("stnFound",label = h4("Select Station"),choices ="Applethorpe",size=10,selectize=F),
+                              #uiOutput("BuildStnLocations"),
+                              selectInput("stnFound",label = h4("Select Station"),choices ="Applethorpe",size=10,selectize=F),
                               textInput("Town", label = h4("Town Starts With..."),value=''),
                               htmlOutput("StationInfo"),
                               uiOutput("NTowns")
@@ -58,11 +81,7 @@ shinyUI(
               ),#fluidRow
               fluidRow(
                 plotlyOutput("chillPlot")
-              ),#fluidRow
-              fluidRow(
-                plotlyOutput("chillPlot2")
               )
-
             )#fluidPage
         ),
           tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),

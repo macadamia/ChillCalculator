@@ -7,10 +7,16 @@ library(plotly)
 
 source('helper.R')
 
+
 startStn <- which(siteInfo$Name == 'Applethorpe')
 startTown <- which(gaz$PlaceName == 'Applethorpe')
 
+
+
 shinyServer(function(input, output,session) {
+
+  stns <- reactiveValues()
+  stns$df <- data.frame(row=numeric(0),stn=character(0))
 
   site <- reactiveValues(currentlLoc=startStn,name='Applethorpe')
 
@@ -27,12 +33,15 @@ shinyServer(function(input, output,session) {
   })
 
 
+
+
   currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
   output$SelectedLocation <- renderUI({
     if(is.null(site$currentLoc)){
       site$currentLoc <- startStn
     }
+    ## replace the UI with a table or something using stns$df
     if(is.na(siteInfo$Name[site$currentLoc])){
       HTML(paste("<br/>Select a Location"))
     } else {
@@ -109,11 +118,6 @@ shinyServer(function(input, output,session) {
   })
 
 
-  output$downloadJPEG <- renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      downloadButton("outputJPEG", "Download JPEG")
-    }
-  })
 
   output$sliderForHeight <-renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
@@ -127,6 +131,7 @@ shinyServer(function(input, output,session) {
     }
     stn<-siteInfo$stnID[site$currentLoc]
     rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+    print(rdata)
     load(rdata)
   }
 
@@ -137,7 +142,19 @@ shinyServer(function(input, output,session) {
       if (is.null(input$yearInput) | is.null(input$startDate) | is.null(site$currentLoc)) {
         return(NULL) #slider not ready
       }
-      loadTheData()
+      loadTheData() # stns$df[1,1] as the location
+      startJDay <- as.numeric(format(input$startDate,'%j'))
+      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
+    }) #renderPlot
+  })#observe
+
+  #need a second chill plot
+  observe({
+    output$chillPlot2 <- renderPlotly({
+      if (is.null(input$yearInput) | is.null(input$startDate | is.null(site$currentLoc))) {
+        return(NULL) #slider not ready
+      }
+      loadTheData() # stns$df[1,1] as the location
       startJDay <- as.numeric(format(input$startDate,'%j'))
       doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
     }) #renderPlot
@@ -263,7 +280,7 @@ shinyServer(function(input, output,session) {
 
   })
 
-  observeEvent ( input$townFound, {
+  observeEvent (input$townFound, {
     if (is.null(input$townFound)) {
       return(NULL)
     }
@@ -275,12 +292,12 @@ shinyServer(function(input, output,session) {
     proxy %>% setView(lng=rlng, lat=rlat, zoom = 9)
 
   })
-  observe({
+  observeEvent(input$map_marker_click,{
     click<-input$map_marker_click
     if(is.null(click)){
       return()
     }
-    text<-paste("Lattitude ", click$lat, "Longtitude ", click$lng)
+    text<-paste("Latitude ", click$lat, "Longtitude ", click$lng)
     rowNumber <- which(siteInfo$stnID == click$id)
     text2<-paste("You've selected point", click$id,'at row #',rowNumber)
     perc <- (siteInfo$PercMaxTObs[rowNumber]+siteInfo$PercMinTObs[rowNumber])/2*100
@@ -292,27 +309,28 @@ shinyServer(function(input, output,session) {
       })
     }
     site$currentLoc <- rowNumber
+    if(nrow(stns$df) == 0){
+      stns$df <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
+    }
+    else if(nrow(stns$df) == 1){
+      #add to 2nd row
+      tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
+      stns$df <- rbind(stns$df, tmp)
+    }
+    else {
+      #move 2nd row to first row and add to 2nd row
+      if(stns$df$row[2] == rowNumber){
+        #already have it
+        stns$df <- stns$df[2,]
+      } else { # append
+        tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
+        stns$df <- stns$df[2,]
+        stns$df <- rbind(stns$df, tmp)
+      }
+    }
+    print(stns$df)
   })
 
-  # output$outputPDF <- downloadHandler(
-  #   filename = function() {
-  #     paste(currentFN(),'pdf',sep='.')
-  #   },
-  #   content=function(file) {
-  #     makePDF(input$yearInput,input$cType,site$currentLoc,input$Y2Date,2)
-  #     file.copy(from = "myGenerated.pdf", to = file)
-  #   }
-  # )
-
-  # output$outputJPEG <- downloadHandler(
-  #   filename = function() {
-  #     paste(currentFN(),'jpg',sep='.')
-  #     },
-  #   content=function(file) {
-  #     makeJPEG(selectedYear$Year,input$cType,input$gType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate,input$JPEGHeight,input$tabs,2)
-  #     file.copy(from = "myGenerated.jpg", to = file)
-  #   }
-  # )
 
 
 })
