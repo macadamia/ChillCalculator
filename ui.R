@@ -17,7 +17,9 @@ shinyUI(
     titlePanel(""),
 
           fluidRow(
-            column(width=4, align = 'center',uiOutput("SelectedLocation")),
+            column(width=3, align = 'center',uiOutput("SelectedLocation")),
+            #column(width=1, align = 'center',uiOutput("FixTop")),
+            column(width=1, align = 'left',checkboxInput("FixTopStn",h4("Fix Stn"),F)),
             column(width=2, align = 'center',uiOutput("yearOutput")),
             column(width=2, align = 'center',uiOutput("dateStart")),
             column(width=2, align = 'center',uiOutput("dateEnd")),
@@ -77,6 +79,9 @@ shinyUI(
                 ),
                 fluidRow(
                   plotlyOutput("GDHPlot")
+                ),
+                fluidRow(
+                  plotlyOutput("GDHPlot2")
                 )
               )#fluidPage
           ),
@@ -84,6 +89,9 @@ shinyUI(
                    fluidPage(
                      fluidRow(
                        plotlyOutput("TempPlot")
+                     ),
+                     fluidRow(
+                       plotlyOutput("TempPlot2")
                      )
                 )
           ),

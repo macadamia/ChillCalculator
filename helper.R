@@ -27,7 +27,7 @@ f1 <- list(
 )
 
 a <- list(
-  title = "Date",
+  title = "",
   type='date',
   titlefont = f1,
   tickfont = f1,
@@ -298,9 +298,9 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
   today <- tail(chill,1)
   todayDate <- format(EDATE,'%d %b %Y')
   if(today > 0){
-    chillMessage <- paste("Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
+    chillMessage <- paste(stnName,"Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
   } else {
-    chillMessage <- 'No Chill has accumulated'
+    chillMessage <- paste(stnName,'No Chill has accumulated')
   }
 
   theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
@@ -443,7 +443,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
     add_trace(y = ~gd,name='This Year',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
 
 
-    layout(xaxis=a,yaxis=b,margin=margin) #,plot_bgcolor="rgb(126,126,126)"
+    layout(xaxis=a,yaxis=b,margin=margin,title=stnName) #,plot_bgcolor="rgb(126,126,126)"
 
 }
 
@@ -506,7 +506,7 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE){
 
     add_trace(y = ~mint,name='Min T',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
 
-    layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest')
+    layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest',title=stnName)
 
 }
 

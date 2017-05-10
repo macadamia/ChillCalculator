@@ -33,21 +33,29 @@ shinyServer(function(input, output,session) {
   })
 
 
-
-
-  currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
+  #currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
   output$SelectedLocation <- renderUI({
-    if(is.null(site$currentLoc)){
-      site$currentLoc <- startStn
+    if(is.null(stns$df[1,1])){
+      stns$df[1,1] <- startStn
     }
     ## replace the UI with a table or something using stns$df
-    if(is.na(siteInfo$Name[site$currentLoc])){
-      HTML(paste("<br/>Select a Location"))
+    if(is.na(siteInfo$Name[stns$df[1,1]])){
+      HTML(paste("<br/>Select a Location from Locations tab"))
     } else {
-     HTML(paste("<br/><h3>",siteInfo$Name[site$currentLoc],"</h3>"))
+      if(is.na(stns$df[2,1])){
+        HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"</h3>"))
+      } else {
+        HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"<br/>",siteInfo$Name[stns$df[2,1]],"</h3>"))
+      }
     }
   })
+
+  # output$FixTop <- renderUI({
+  #   if( (input$tabs == 'Locations' | input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature') & !is.na(stns$df[2,1]) ){
+  #     topcheckboxInput("FixTopStn",h4("Fix Stn"),F)
+  #   }
+  # })
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
@@ -125,13 +133,16 @@ shinyServer(function(input, output,session) {
     }
   })
 
-  loadTheData <- function() {
-    if(is.null(site$currentLoc)){
-      site$currentLoc <- startStn
-    }
-    stn<-siteInfo$stnID[site$currentLoc]
+  loadTheData <- function(theStn) {
+    # if(is.null(site$currentLoc)){
+    #   site$currentLoc <- startStn
+    # }
+    #stn<-siteInfo$stnID[site$currentLoc]
+
+    stn <- siteInfo$stnID[theStn]
     rdata <- file.path('Data',paste(stn,'.RData',sep=''))
     print(rdata)
+
     load(rdata)
   }
 
@@ -139,49 +150,90 @@ shinyServer(function(input, output,session) {
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate) | is.null(site$currentLoc)) {
+      if (is.null(input$yearInput) | is.null(input$startDate) ) {
         return(NULL) #slider not ready
       }
-      loadTheData() # stns$df[1,1] as the location
+      if(is.na(stns$df[1,1])){
+        stns$df[1,1] <- startStn
+        print(stns$df)
+      }
+      loadTheData(stns$df[1,1])
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
+      doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$Y2DateChill,input$startDate,input$endDate)
     }) #renderPlot
   })#observe
 
   #need a second chill plot
   observe({
     output$chillPlot2 <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate | is.null(site$currentLoc))) {
+      if (is.null(input$yearInput) | is.null(input$startDate) ){
         return(NULL) #slider not ready
       }
-      loadTheData() # stns$df[1,1] as the location
+      if(is.na(stns$df[2,1])){
+        return(NULL)
+      }
+      loadTheData(stns$df[2,1]) # stns$df[1,1] as the location
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,site$currentLoc,input$Y2DateChill,input$startDate,input$endDate)
+      doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$Y2DateChill,input$startDate,input$endDate)
     }) #renderPlot
   })#observe
 
   ### GDH Plot ###
   observe({
     output$GDHPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate) | is.null(site$currentLoc)) {
+      if (is.null(input$yearInput) | is.null(input$startDate) ) {
         return(NULL) #sliders not ready
       }
-      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(site$currentLoc) | is.null(input$Y2DateGDH) | is.null(input$baseTemp )){
+      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$Y2DateGDH) | is.null(input$baseTemp )){
         return(NULL)
       }
-      loadTheData()
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH,input$baseTemp)
+      if(is.na(stns$df[1,1])){
+        stns$df[1,1] <- startStn
+      }
+      loadTheData(stns$df[1,1])
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$Y2DateGDH,input$baseTemp)
+
+    }) #renderPlot
+  })
+
+  observe({
+    output$GDHPlot2 <- renderPlotly({
+      if (is.null(input$yearInput) | is.null(input$startDate) ) {
+        return(NULL) #sliders not ready
+      }
+      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$Y2DateGDH) | is.null(input$baseTemp )){
+        return(NULL)
+      }
+      if(is.na(stns$df[2,1])){
+        return(NULL)
+      }
+      loadTheData(stns$df[2,1])
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$Y2DateGDH,input$baseTemp)
 
     }) #renderPlot
   })
 
 
   output$TempPlot <- renderPlotly({
-    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate) | is.null(site$currentLoc)) {
+    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate) ) {
       return(NULL) #sliders not ready
     }
-    loadTheData()
-    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,site$currentLoc,1)
+    if(is.na(stns$df[1,1])){
+      stns$df[1,1] <- startStn
+    }
+    loadTheData(stns$df[1,1])
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[1,1],1)
+  })
+
+  output$TempPlot2 <- renderPlotly({
+    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate) ) {
+      return(NULL) #sliders not ready
+    }
+    if(is.na(stns$df[2,1])){
+      return(NULL)
+    }
+    loadTheData(stns$df[2,1])
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[2,1],1)
   })
 
 
@@ -311,23 +363,35 @@ shinyServer(function(input, output,session) {
     site$currentLoc <- rowNumber
     if(nrow(stns$df) == 0){
       stns$df <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
-    }
-    else if(nrow(stns$df) == 1){
-      #add to 2nd row
+    } else if(nrow(stns$df) == 1){
+      print("add to 2nd row")
       tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
       stns$df <- rbind(stns$df, tmp)
-    }
-    else {
-      #move 2nd row to first row and add to 2nd row
+    } else {
+      #move 2nd row to first row and add to 2nd row, or replace 2 depending on FixTopStn
       if(stns$df$row[2] == rowNumber){
-        #already have it
+        print("already have it, replace the df with just this stn")
         stns$df <- stns$df[2,]
-      } else { # append
+      } else { # replace or shift
         tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
-        stns$df <- stns$df[2,]
-        stns$df <- rbind(stns$df, tmp)
+        if(input$FixTopStn){
+          print("keep top")
+          stns$df <- stns$df[1,]
+          stns$df <- rbind(stns$df, tmp)
+        } else {
+          print("replace top")
+          stns$df <- stns$df[2,]
+          stns$df <- rbind(stns$df, tmp)
+        }
       }
     }
+    if(nrow(stns$df) == 2){
+      if(stns$df[1,1] == stns$df[2,1]){
+        print("Two the same")
+        stns$df <- stns$df[1,]
+      }
+    }
+
     print(stns$df)
   })
 
