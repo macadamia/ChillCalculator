@@ -109,6 +109,21 @@ getMet<-function(stn,Year){
   }
 }
 
+getMetGDH<-function(stn,sYear,sMth,sDay,eYear,eMth,eDay){
+  theurl<-paste(THEURL,stn,sep="")
+  theurl<-paste(theurl,"&ddStart=",sDay,"&mmStart=",sMth,"&yyyyStart=",sYear,"&ddFinish=",eDay,"&mmFinish=",eMth,sep="")
+  theurl<-paste(theurl,"&yyyyFinish=",eYear,sep="")
+  conn<-url(theurl)
+  t.p<-try(hdr <- readLines(conn, 20, FALSE))
+  if(!inherits(t.p, "try-error")){
+    tab.1 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
+    return (tab.1)
+  } else {
+    return(NA)
+  }
+}
+
+
 getMetLT<-function(stn){ #long-term data
   theurl<-paste(THEURL,stn,sep="")
   theurl<-paste(theurl,"&ddStart=",1,"&mmStart=",1,"&yyyyStart=",1981,"&ddFinish=",31,"&mmFinish=",12,sep="")
@@ -122,6 +137,51 @@ getMetLT<-function(stn){ #long-term data
     return(NA)
   }
 }
+
+getLTGDH<-function(stn,sYear,sMth,sDay,eYear,eMth,eDay,metOnly){ #long-term data for GDH
+  sdate <- as.Date(paste(sYear,sMth,sDay,sep='-'),'%Y-%m-%d')
+  sJDay <- as.numeric(format(sdate,'%j'))
+  edate <- as.Date(paste(eYear,eMth,eDay,sep='-'),'%Y-%m-%d')
+  nDays <- as.numeric(edate - sdate) + 1
+  ltYears <- seq(1981,2010)
+  newGDH <- matrix(0,nrow=length(ltYears), ncol = nDays)
+  theurl<-paste(THEURL,stn,sep="")
+  theurl<-paste(theurl,"&ddStart=",1,"&mmStart=",1,"&yyyyStart=",1981,"&ddFinish=",31,"&mmFinish=",12,sep="")
+  theurl<-paste(theurl,"&yyyyFinish=",2011,sep="")
+  conn<-url(theurl)
+  hdr <- readLines(conn, 20, FALSE)
+  tab.1 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
+  if(metOnly){
+    return(tab.1)
+  }
+  year <- tab.1[,1]
+  day <- tab.1[ ,2]
+  theseDates <- as.Date(paste(year,day,sep='-'),'%Y-%j')
+
+    # fing leap years
+  for(i in 1:length(ltYears)){
+    yr <- ltYears[i]
+    thisStart <- as.Date(paste(yr,sMth,sDay,sep='-'),'%Y-%m-%d')
+    thisEnd <- as.Date(paste(yr+1,eMth,eDay,sep='-'),'%Y-%m-%d')
+    these <- which(theseDates >= thisStart & theseDates <= thisEnd)
+    tab.sub <- tab.1[these, ]
+    results <- calcHeat(tab.sub,lat, sJDay) #return(list(gdh=gdh,units=units,maxHeat=maxHeat,jday=ch$JDay[these],hours=ch$Hour[these]))
+    hours <- results$hours
+    if(leap_year(yr) | leap_year(yr+1)){
+      theDates <- seq.Date(as.Date(paste(yr,sMth,sDay,sep='-'),'%Y-%m-%d'),as.Date(paste(yr+1,eMth,eDay,sep='-'),'%Y-%m-%d'),'days')
+      leapdayIndex <- grep(paste(yr,"02-29",sep='-'),as.character(theDates)) + grep(paste(yr+1,"02-29",sep='-'),as.character(theDates))
+      if(length(leapdayIndex) > 0 ) {
+        gdh <- results$gdh[hours==24][-leapdayIndex]
+      }
+    } else {
+      gdh <- results$gdh[hours==24]
+    }
+    newGDH[yr-1980,1:nDays] <- gdh
+  }
+  return(newGDH)
+}
+
+
 
 calcChill <- function(tab.1,lat,sJDay,eJDay,inputcType){
   year <- tab.1[,1]
@@ -158,7 +218,7 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,inputcType){
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
-calcHeat <- function(tab.1,lat,sJDay,eJDay){
+calcHeat <- function(tab.1,lat,sJDay){
   year <- tab.1[,1]
   day <- tab.1[ ,2]
   maxt <- tab.1[,4]
@@ -181,21 +241,21 @@ calcHeat <- function(tab.1,lat,sJDay,eJDay){
 }
 
 
-calcLT <- function(tab.1,lat,sJDay){ # long-Term data
-  year <- tab.1[,1]
-  day <- tab.1[ ,2]
-  maxt <- tab.1[,4]
-  mint <- tab.1[,5]
-
-  chillWeather<-data.frame(year,day,maxt,mint)
-  colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
-  THourly<-make_hourly_temps(lat,chillWeather)
-  stack<-stack_hourly_temps(hour_file=THourly)
-  #get chill and heating info
-  ch<-chilling_hourtable(stack,sJDay)
-
-  return(ch)
-}
+# calcLT <- function(tab.1,lat,sJDay){ # long-Term data
+#   year <- tab.1[,1]
+#   day <- tab.1[ ,2]
+#   maxt <- tab.1[,4]
+#   mint <- tab.1[,5]
+#
+#   chillWeather<-data.frame(year,day,maxt,mint)
+#   colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
+#   THourly<-make_hourly_temps(lat,chillWeather)
+#   stack<-stack_hourly_temps(hour_file=THourly)
+#   #get chill and heating info
+#   ch<-chilling_hourtable(stack,sJDay)
+#
+#   return(ch)
+# }
 
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
 doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
@@ -206,6 +266,8 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
   # LOCATION<-317
   # STARTDATE<-as.Date('2016-5-1')
   # EDATE<-as.Date('2016-9-1')
+
+  print('hello')
 
   Year <- as.numeric(YEAR)
   sJDay <- as.numeric(format(STARTDATE,'%j'))
@@ -331,7 +393,25 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
 #doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH,input$baseTemp)
 doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
 
+  YEAR <- '2014'
+  GTYPE <- 1
+  SDATE <- as.Date('2014-05-01')
+  EDATE <- as.Date('2015-05-8')
+  LOCATION <- 317
+  Y2DATE <- T
+  BASETEMP <- '10'
+
+  heatDates <- seq.Date(SDATE,EDATE,'days')
+  heatJDays <- as.numeric(format(heatDates,'%j'))
+
   Year <- as.numeric(YEAR)
+
+  sYear <- as.numeric(format(SDATE,'%Y'))
+  eYear <- as.numeric(format(EDATE,'%Y'))
+  sMth <- as.numeric(format(SDATE,'%m'))
+  eMth <- as.numeric(format(EDATE,'%m'))
+  sDay <- as.numeric(format(SDATE,'%d'))
+  eDay <- as.numeric(format(EDATE,'%d'))
 
   sJDay<-as.numeric(format(SDATE,'%j'))
   eJDay<-as.numeric(format(EDATE,'%j'))
@@ -340,16 +420,17 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
   stn<-siteInfo$stnID[LOCATION]
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
+  cat(Year,sYear,eYear,'\n')
+  if(sYear == eYear){ # just one year so grab the ready-made data
+    print("Loading std data")
+    rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+    load(rdata)
+  }
 
-  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-  load(rdata)
-
-  #currently this is all calendar year stuff
-
-  tab.1<-getMet(stn,Year)
+  tab.1<-getMetGDH(stn,sYear,sMth,sDay,eYear,eMth,eDay)
   if(!any(is.na(tab.1))){
     if(GTYPE == 1) {
-      res <- calcHeat(tab.1,lat,sJDay,eJDay)
+      res <- calcHeat(tab.1,lat,sJDay)
       gdh <- res$gdh
       YLAB <- res$units
       maxGD <- res$maxGDH
@@ -368,14 +449,14 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
       gdd <- cumsum(gTmp)
       jday <- tab.1[,'day']
       gdd[ jday < sJDay] <- NA
-      gd <- gdd - gdd[sJDay]
+      gd <- gdd - gdd[1]
       maxGD <- max(gd,na.rm=T)
       YLAB <- paste('Growing Degree Days (base =',BASETEMP,'ºC)')
     }
   }
 
-  if(as.numeric(BASETEMP) != GDDb & GTYPE == 2){ # GDD
-    tab.LT <- getMetLT(stn) # this is the long term data
+  if( (as.numeric(BASETEMP) != GDDb & GTYPE == 2) | sYear != eYear ){ # GDD
+    tab.LT <- getLTGDH(stn,sYear,sMth,sDay,eYear,eMth,eDay,T) # this is the long term met data only
     #GDD
     gdd <- (tab.LT[,'maxt'] + tab.LT[,'mint'])/2 - as.numeric(BASETEMP)
     gdd[gdd < 0] <- 0
@@ -385,6 +466,13 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
     GDD <- colMeans(gdd)
     GDDHot <- apply(gdd,2,quantile,probs=0.9,na.rm=T)
     GDDCold <- apply(gdd,2,quantile,probs=0.1,na.rm=T)
+  }
+
+  if(GTYPE == 1 & sYear != eYear){ # recalculate the GDH
+    newLT <- getLTGDH(stn,sYear,sMth,sDay,eYear,eMth,eDay,lat,F) # get the long term GDH data for this range of days
+    GDH <- colMeans(newLT)
+    GDHHot <- apply(newLT,2,quantile,probs=0.9,na.rm=T)
+    GDHCold <- apply(newLT,2,quantile,probs=0.1,na.rm=T)
   }
 
   if(GTYPE == 1) {
@@ -423,9 +511,10 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
     YLIM <- range(c(LTGD[sJDay:lastJDay],LTHot[sJDay:lastJDay],LTCold[sJDay:lastJDay],gd),na.rm=T)
   }
 
-  JDays <- sJDay:lastJDay
-  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-  theData <- data.frame(JDays=JDays,date=labs,gd=gd[sJDay:lastJDay],LTGD=LTGD[sJDay:lastJDay],
+  ##########  Needs Work ####################
+  JDays <- heatJDays
+  #labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+  theData <- data.frame(JDays=JDays,date=heatDates,gd=gd,LTGD=LTGD[sJDay:lastJDay],
                         LTHot=LTHot[sJDay:lastJDay],LTCold=LTCold[sJDay:lastJDay])
   b <- list(
     title = YLAB,

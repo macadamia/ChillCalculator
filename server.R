@@ -115,7 +115,8 @@ shinyServer(function(input, output,session) {
       if (is.null(input$yearInput)) {
         return(NULL) #dropbox not ready
       }
-      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),  min = paste(selectedYear$Year,"-01-01",sep=''), max =  checkDateEnd(as.character(Sys.Date()-1)))
+      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),
+                min = paste(selectedYear$Year,"-01-01",sep='')) #,max =  checkDateEnd(as.character(Sys.Date()-1)))
     }
   })
 
@@ -127,11 +128,11 @@ shinyServer(function(input, output,session) {
 
 
 
-  output$sliderForHeight <-renderUI({
-    if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
-    }
-  })
+  # output$sliderForHeight <-renderUI({
+  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
+  #     sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
+  #   }
+  # })
 
   loadTheData <- function(theStn) {
     # if(is.null(site$currentLoc)){
@@ -190,7 +191,7 @@ shinyServer(function(input, output,session) {
       if(is.na(stns$df[1,1])){
         stns$df[1,1] <- startStn
       }
-      loadTheData(stns$df[1,1])
+      #loadTheData(stns$df[1,1])
       doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$Y2DateGDH,input$baseTemp)
 
     }) #renderPlot
@@ -207,7 +208,7 @@ shinyServer(function(input, output,session) {
       if(is.na(stns$df[2,1])){
         return(NULL)
       }
-      loadTheData(stns$df[2,1])
+      #loadTheData(stns$df[2,1])
       doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$Y2DateGDH,input$baseTemp)
 
     }) #renderPlot

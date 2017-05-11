@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ScappleDocument Version="1.1" ID="A8243A82-54DD-4D8E-9BBD-6FB82FEF227E">
+    <Notes>
+        <Note ID="0" FontSize="14.0" Position="132.0,120.0" Width="138.0">
+            <Appearance>
+                <Alignment>Left</Alignment>
+                <Border Weight="1"></Border>
+            </Appearance>
+            <String>Inputs:
+
+Location stns$df[1,1]
+
+Year
+
+gType
+
+dateStart
+dateEnd
+
+baseTemp</String>
+        </Note>
+        <Note ID="1" FontSize="14.0" Position="393.339844,127.09375" Width="894.0">
+            <Appearance>
+                <Alignment>Left</Alignment>
+                <Border Weight="1"></Border>
+            </Appearance>
+            <String>GDHPlot
+
+Checks inputs available
+
+calls loadTheData(stns$df[1,1]
+
+doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$Y2DateGDH,input$baseTemp)</String>
+            <ConnectedNoteIDs>2, 4</ConnectedNoteIDs>
+            <PointsToNoteIDs>2, 4</PointsToNoteIDs>
+        </Note>
+        <Note ID="2" FontSize="14.0" Position="369.773438,380.117188" Width="283.0">
+            <Appearance>
+                <Alignment>Left</Alignment>
+                <TextColor>1.0 0.0 0.0</TextColor>
+                <Border Weight="1"></Border>
+            </Appearance>
+            <String>loadTheData[theStn)
+
+theStn is a row number in siteInfo.rds
+</String>
+            <ConnectedNoteIDs>1, 3</ConnectedNoteIDs>
+        </Note>
+        <Note ID="3" FontSize="14.0" Position="119.0,381.921875" Width="200.0">
+            <Appearance>
+                <Alignment>Left</Alignment>
+                <TextColor>1.0 0.0 0.0</TextColor>
+                <Border Weight="1"></Border>
+            </Appearance>
+            <String>rData
+
+Contains a load of information
+from station name ot all of the long term information
+</String>
+            <ConnectedNoteIDs>2, 4</ConnectedNoteIDs>
+        </Note>
+        <Note ID="4" FontSize="14.0" Position="386.421875,524.585938" Width="535.0">
+            <Appearance>
+                <Alignment>Left</Alignment>
+                <Border Weight="1"></Border>
+            </Appearance>
+            <String>in helper.R
+doThePlot &lt;- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE)
+
+loads rData
+
+tab.1&lt;-getMet(stn,Year) - seems limiting,  when we already have STARTDATE and EDATE
+
+rewriteen as
+
+tab.1 &lt;- getMet(stn,sYear,sMth,sDay,eYear,eMth,eDay)
+
+</String>
+            <ConnectedNoteIDs>1, 3</ConnectedNoteIDs>
+        </Note>
+        <Note ID="5" FontSize="14.0" Position="115.453125,605.441406" Width="200.0">
+            <Appearance>
+                <Alignment>Left</Alignment>
+                <Border Weight="1"></Border>
+            </Appearance>
+            <String>calcHeat
+
+what happens when the data spans a calendar year?
+</String>
+        </Note>
+    </Notes>
+    <BackgroundShapes></BackgroundShapes>
+    <AutoFit>0</AutoFit>
+    <NoteStyles>
+        <Style Name="Title Text" ID="A5E58D2E-4998-48FF-B49A-161719128C63" AffectFontStyle="Yes" AffectAlignment="Yes" AffectTextColor="No" AffectNoteBody="No" AffectFade="No">
+            <FontSize>28.0</FontSize>
+            <IsBold>Yes</IsBold>
+        </Style>
+        <Style Name="Red Text" ID="182F8FD3-477F-4DD5-8A52-045D942E0F12" AffectFontStyle="No" AffectAlignment="No" AffectTextColor="Yes" AffectNoteBody="No" AffectFade="No">
+            <TextColor>1.0 0.0 0.0</TextColor>
+        </Style>
+        <Style Name="Brown Bubble" ID="F1C32F11-DC56-4616-9B62-A146DC293911" AffectFontStyle="No" AffectAlignment="No" AffectTextColor="No" AffectNoteBody="Yes" AffectFade="No">
+            <BorderThickness>1</BorderThickness>
+            <BorderColor>0.290055 0.1523 0.182215</BorderColor>
+            <FillColor>0.940019 0.892907 0.779716</FillColor>
+        </Style>
+        <Style Name="Yellow Bubble" ID="DB03986E-C524-4ABF-BAA5-D982B8483466" AffectFontStyle="No" AffectAlignment="No" AffectTextColor="No" AffectNoteBody="Yes" AffectFade="No">
+            <BorderThickness>1</BorderThickness>
+            <BorderColor>0.756763 0.785592 0.373258</BorderColor>
+            <FillColor>0.906773 0.910625 0.634363</FillColor>
+        </Style>
+        <Style Name="Green Bubble" ID="D89A0C92-55CE-4304-A3C6-F9867B5ECA44" AffectFontStyle="No" AffectAlignment="No" AffectTextColor="No" AffectNoteBody="Yes" AffectFade="No">
+            <BorderThickness>1</BorderThickness>
+            <BorderColor>0.331867 0.609932 0.356197</BorderColor>
+            <FillColor>0.790123 0.882328 0.80198</FillColor>
+        </Style>
+        <Style Name="Blue Bubble" ID="C83135D5-6686-413F-909B-9CCF034FD3BB" AffectFontStyle="No" AffectAlignment="No" AffectTextColor="No" AffectNoteBody="Yes" AffectFade="No">
+            <BorderThickness>1</BorderThickness>
+            <BorderColor>0.477193 0.557066 0.76433</BorderColor>
+            <FillColor>0.840969 0.866828 0.925903</FillColor>
+        </Style>
+        <Style Name="Pink Bubble" ID="D915B57A-E715-493F-9BA1-3E034703CBE2" AffectFontStyle="No" AffectAlignment="No" AffectTextColor="No" AffectNoteBody="Yes" AffectFade="No">
+            <BorderThickness>1</BorderThickness>
+            <BorderColor>0.747881 0.366532 0.542813</BorderColor>
+            <FillColor>0.918452 0.807302 0.863467</FillColor>
+        </Style>
+    </NoteStyles>
+    <UISettings>
+        <BackgroundColor>0.999737 0.986332 0.931298</BackgroundColor>
+        <DefaultFont>Helvetica</DefaultFont>
+        <DefaultTextColor>0.0 0.0 0.0</DefaultTextColor>
+    </UISettings>
+    <PrintSettings PaperSize="595.0,842.0" LeftMargin="72.0" RightMargin="72.0" TopMargin="90.0" BottomMargin="90.0" PaperType="iso-a4" Orientation="Portrait" HorizontalPagination="Clip" VerticalPagination="Auto" ScaleFactor="1.0" HorizontallyCentered="Yes" VerticallyCentered="Yes" Collates="Yes" PagesAcross="1" PagesDown="1"></PrintSettings>
+</ScappleDocument>
