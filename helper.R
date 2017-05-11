@@ -420,12 +420,12 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
   stn<-siteInfo$stnID[LOCATION]
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
-  cat(Year,sYear,eYear,'\n')
-  if(sYear == eYear){ # just one year so grab the ready-made data
+  #cat(Year,sYear,eYear,'\n')
+  #if(sYear == eYear){ # just one year so grab the ready-made data
     print("Loading std data")
     rdata <- file.path('Data',paste(stn,'.RData',sep=''))
     load(rdata)
-  }
+  #}
 
   tab.1<-getMetGDH(stn,sYear,sMth,sDay,eYear,eMth,eDay)
   if(!any(is.na(tab.1))){
@@ -469,7 +469,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
   }
 
   if(GTYPE == 1 & sYear != eYear){ # recalculate the GDH
-    newLT <- getLTGDH(stn,sYear,sMth,sDay,eYear,eMth,eDay,lat,F) # get the long term GDH data for this range of days
+    newLT <- getLTGDH(stn,sYear,sMth,sDay,eYear,eMth,eDay,F) # get the long term GDH data for this range of days
     GDH <- colMeans(newLT)
     GDHHot <- apply(newLT,2,quantile,probs=0.9,na.rm=T)
     GDHCold <- apply(newLT,2,quantile,probs=0.1,na.rm=T)
