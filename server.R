@@ -1,5 +1,5 @@
 #server.R
-
+rm(list=ls())
 library(chillR)
 library(shinysky)
 library(leaflet)
@@ -160,7 +160,7 @@ shinyServer(function(input, output,session) {
       }
       loadTheData(stns$df[1,1])
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$Y2DateChill,input$startDate,input$endDate)
+      doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate)
     }) #renderPlot
   })#observe
 
@@ -175,7 +175,7 @@ shinyServer(function(input, output,session) {
       }
       loadTheData(stns$df[2,1]) # stns$df[1,1] as the location
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$Y2DateChill,input$startDate,input$endDate)
+      doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$startDate,input$endDate)
     }) #renderPlot
   })#observe
 
@@ -185,14 +185,14 @@ shinyServer(function(input, output,session) {
       if (is.null(input$yearInput) | is.null(input$startDate) ) {
         return(NULL) #sliders not ready
       }
-      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$Y2DateGDH) | is.null(input$baseTemp )){
+      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
         return(NULL)
       }
       if(is.na(stns$df[1,1])){
         stns$df[1,1] <- startStn
       }
       #loadTheData(stns$df[1,1])
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$Y2DateGDH,input$baseTemp)
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$baseTemp)
 
     }) #renderPlot
   })
@@ -202,14 +202,14 @@ shinyServer(function(input, output,session) {
       if (is.null(input$yearInput) | is.null(input$startDate) ) {
         return(NULL) #sliders not ready
       }
-      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$Y2DateGDH) | is.null(input$baseTemp )){
+      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
         return(NULL)
       }
       if(is.na(stns$df[2,1])){
         return(NULL)
       }
       #loadTheData(stns$df[2,1])
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$Y2DateGDH,input$baseTemp)
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$baseTemp)
 
     }) #renderPlot
   })

@@ -53,10 +53,10 @@ shinyUI(
               fluidRow(
                 column(width=2,
                        radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
-                ),
-                column(width=3,
-                       radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
-                )
+                )#,
+                # column(width=3,
+                #        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
+                #)
               ),#fluidRow
               fluidRow(
                 plotlyOutput("chillPlot")
@@ -72,10 +72,10 @@ shinyUI(
                 fluidRow(
                   column(width=2,
                          radioButtons("Y2DateGDH", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
-                  ),
-                  column(width=3,
-                         radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
-                  )
+                  )#,
+                  # column(width=3,
+                  #        radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),selected = 2)
+                  #)
                 ),
                 fluidRow(
                   plotlyOutput("GDHPlot")
