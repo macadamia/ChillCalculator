@@ -11,8 +11,6 @@ source('helper.R')
 startStn <- which(siteInfo$Name == 'Applethorpe')
 startTown <- which(gaz$PlaceName == 'Applethorpe')
 
-
-
 shinyServer(function(input, output,session) {
 
   stns <- reactiveValues()
@@ -52,14 +50,14 @@ shinyServer(function(input, output,session) {
   })
 
   # output$FixTop <- renderUI({
-  #   if( (input$tabs == 'Locations' | input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature') & !is.na(stns$df[2,1]) ){
-  #     topcheckboxInput("FixTopStn",h4("Fix Stn"),F)
+  #   if( input$tabs == 'Locations' & !is.na(stns$df[2,1]) ){
+  #     checkboxInput("FixTopStn","Keep upper station",F,width='100%')
   #   }
   # })
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), currentYear)
     }
   })
 
@@ -90,33 +88,36 @@ shinyServer(function(input, output,session) {
 
     if(input$tabs == 'Chill'){
       if(input$cType == 3){
-        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+        value1 <- checkDate(paste(selectedYear$Year,"-05-01",sep=''))  #selectedYear$Year
       } else {
-        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep=''))
+        value1 = checkDate(paste(selectedYear$Year,"-03-01",sep='')) #selectedYear$Year
       }
     }
 
     if(input$tabs == 'Growing Degrees' ){
-      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep=''))
+      value1 = checkDate(paste(selectedYear$Year,"-05-01",sep='')) # selectedYear$Year
     }
 
     if(input$tabs == 'Temperature'){
-      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
+      value1 = checkDate(paste(selectedYear$Year,"-01-01",sep='')) # selectedYear$Year
     }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
+      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1) #selectedYear$Year
     }
   })
 
   output$dateEnd <- renderUI({
+    if(is.null(input$yearInput)){
+      return(NULL)
+    }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      if (is.null(input$yearInput)) {
-        return(NULL) #dropbox not ready
-      }
+      # if (is.null(input$yearInput)) {
+      #   return(NULL) #dropbox not ready
+      # }
       dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),
-                min = paste(selectedYear$Year,"-01-01",sep='')) #,max =  checkDateEnd(as.character(Sys.Date()-1)))
+                min = paste(selectedYear$Year,"-01-01",sep='')) #,max =  checkDateEnd(as.character(Sys.Date()-1))) #selectedYear$Year
     }
   })
 
@@ -151,7 +152,7 @@ shinyServer(function(input, output,session) {
   ### Chill Plot ###
   observe({
     output$chillPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate) ) {
+      if ( is.null(input$startDate) ) {
         return(NULL) #slider not ready
       }
       if(is.na(stns$df[1,1])){
@@ -160,14 +161,14 @@ shinyServer(function(input, output,session) {
       }
       loadTheData(stns$df[1,1])
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate)
+      doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate) #selectedYear$Year
     }) #renderPlot
   })#observe
 
   #need a second chill plot
   observe({
     output$chillPlot2 <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate) ){
+      if ( is.null(input$startDate) ){
         return(NULL) #slider not ready
       }
       if(is.na(stns$df[2,1])){
@@ -175,33 +176,33 @@ shinyServer(function(input, output,session) {
       }
       loadTheData(stns$df[2,1]) # stns$df[1,1] as the location
       startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$startDate,input$endDate)
+      doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$startDate,input$endDate) #selectedYear$Year
     }) #renderPlot
   })#observe
 
   ### GDH Plot ###
   observe({
     output$GDHPlot <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate) ) {
-        return(NULL) #sliders not ready
-      }
-      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
+      print("gType and startDate...")
+      if(  is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
+        print(input$gType)
+        print(input$startDate)
+        print(input$endDate)
+        print(input$baseTemp)
         return(NULL)
       }
       if(is.na(stns$df[1,1])){
         stns$df[1,1] <- startStn
       }
       #loadTheData(stns$df[1,1])
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$baseTemp)
+      print('About to run doTheHeatPlot')
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$baseTemp) #selectedYear$Year
 
     }) #renderPlot
   })
 
   observe({
     output$GDHPlot2 <- renderPlotly({
-      if (is.null(input$yearInput) | is.null(input$startDate) ) {
-        return(NULL) #sliders not ready
-      }
       if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
         return(NULL)
       }
@@ -209,32 +210,32 @@ shinyServer(function(input, output,session) {
         return(NULL)
       }
       #loadTheData(stns$df[2,1])
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$baseTemp)
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$baseTemp) # selectedYear$Year
 
     }) #renderPlot
   })
 
 
   output$TempPlot <- renderPlotly({
-    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate) ) {
+    if (is.null(input$startDate) | is.null(input$endDate) ) {
       return(NULL) #sliders not ready
     }
     if(is.na(stns$df[1,1])){
       stns$df[1,1] <- startStn
     }
     loadTheData(stns$df[1,1])
-    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[1,1],1)
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[1,1]) # selectedYear$Year
   })
 
   output$TempPlot2 <- renderPlotly({
-    if (is.null(selectedYear$Year) | is.null(input$startDate) | is.null(input$endDate) ) {
+    if (is.null(input$startDate) | is.null(input$endDate) ) {
       return(NULL) #sliders not ready
     }
     if(is.na(stns$df[2,1])){
       return(NULL)
     }
     loadTheData(stns$df[2,1])
-    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[2,1],1)
+    doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[2,1]) #selectedYear$Year
   })
 
 
@@ -261,14 +262,14 @@ shinyServer(function(input, output,session) {
       mtch <- match('Kilmore Gap',siteInfo$Name)
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
-      zoom <- 8
+      zoom <- 9
     }
     if(input$Region == "4"){
       #TAS
       mtch <- match('Hobart Airport',siteInfo$Name)
       rlng <- siteInfo$longitude[mtch]
       rlat <- siteInfo$latitude[mtch]
-      zoom <- 9
+      zoom <- 10
     }
     if(input$Region == "5"){
       #SA
