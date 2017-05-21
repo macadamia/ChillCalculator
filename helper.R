@@ -315,11 +315,11 @@ calcHeat <- function(tab.met,lat,sJDay){
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$startDate)
 doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
 
-  YEAR<-2017
-  CHILLTYPE<-1
-  LOCATION<-317
-  STARTDATE<-as.Date('2017-3-1')
-  EDATE<-as.Date('2017-05-21')
+  # YEAR<-2017
+  # CHILLTYPE<-1
+  # LOCATION<-317
+  # STARTDATE<-as.Date('2017-3-1')
+  # EDATE<-as.Date('2017-05-21')
 
   #need to check the year in case we did a GD with across the years
   sYear <- as.numeric(format(STARTDATE,'%Y'))
@@ -473,8 +473,8 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   #cat(Year,sYear,eYear,'\n')
   #if(sYear == eYear){ # just one year so grab the ready-made data
   print("Loading std data")
-  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-  load(rdata)
+  # rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+  # load(rdata)
   #}
   cat('Latitude',lat,'\n')
   tab.1 <- getMet(stn,SDATE,EDATE)
@@ -608,6 +608,7 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
   maxt <- tab.1$maxt
   mint <- tab.1$mint
   jday <- tab.1$day
+
 
 
   YLIM <- c(min(c(maxt,mint,minTCold,maxTHot),na.rm=T),max(c(maxt,mint,minTCold,maxTHot),na.rm=T))
