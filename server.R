@@ -76,7 +76,11 @@ shinyServer(function(input, output,session) {
     aYear <- as.numeric(input$yearInput)
     thisYear <- as.numeric(format(Sys.Date(),'%Y'))
     if(aYear == thisYear){
-      return(Sys.Date()-1)
+      nDaysToSubstract <- 1
+      if(as.numeric(format(Sys.time(),'%H')) < 12){ # silo probably not updated
+        nDaysToSubstract <- 2
+      }
+      return(Sys.Date() - nDaysToSubstract)
     } else {
       return(paste(aYear,'-12-31',sep=''))
     }
@@ -119,7 +123,8 @@ shinyServer(function(input, output,session) {
       # if (is.null(input$yearInput)) {
       #   return(NULL) #dropbox not ready
       # }
-      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date()-1)),
+
+      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date())),
                 min = paste(selectedYear$Year,"-01-01",sep='')) #,max =  checkDateEnd(as.character(Sys.Date()-1))) #selectedYear$Year
     }
   })

@@ -315,16 +315,17 @@ calcHeat <- function(tab.met,lat,sJDay){
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$startDate)
 doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
 
-  # YEAR<-2017
-  # CHILLTYPE<-3
-  # LOCATION<-317
-  # STARTDATE<-as.Date('2017-5-1')
-  # EDATE<-as.Date('2017-05-18')
+  YEAR<-2017
+  CHILLTYPE<-1
+  LOCATION<-317
+  STARTDATE<-as.Date('2017-3-1')
+  EDATE<-as.Date('2017-05-21')
 
   #need to check the year in case we did a GD with across the years
   sYear <- as.numeric(format(STARTDATE,'%Y'))
   eYear <- as.numeric(format(EDATE,'%Y'))
   if(eYear != sYear){
+    print('Update the end year from previous multiyear')
     eJDay <- as.numeric(format(EDATE,'%j'))
     EDATE <- as.Date(paste(sYear,eJDay,'sep=-'),'%Y-%j')
     #now update the display
@@ -367,6 +368,14 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
 
     jday <- jday[hour24]
     chill <- chill[hour24]
+
+    #does eJDay == tail(jday,1)
+    todayDate <- format(EDATE,'%d %b %Y')
+    if( eJDay != tail(jday,1) ){
+      eJDay <- tail(jday,1)
+      actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
+      todayDate <- format(actualEndDate,'%d %b %Y')
+    }
     chill <- chill[which(jday == sJDay):which(jday == eJDay)]
 
   }
@@ -393,7 +402,7 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
     labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
 
     today <- tail(chill,1)
-    todayDate <- format(EDATE,'%d %b %Y')
+
     if(today > 0){
       chillMessage <- paste(stnName,"Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
     } else {
