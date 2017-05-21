@@ -17,13 +17,13 @@ shinyUI(
     titlePanel(""),
 
           fluidRow(
-            column(width=2, align = 'left',uiOutput("SelectedLocation")),
+            column(width=3, align = 'left',uiOutput("SelectedLocation")),
             #column(width=2, align = 'center',uiOutput("FixTop")),
             #column(width=2, align = 'left',checkboxInput("FixTopStn",h4("Fix Stn"),F)),
             column(width=2, align = 'center',uiOutput("yearOutput")),
             column(width=2, align = 'center',uiOutput("dateStart")),
             column(width=2, align = 'center',uiOutput("dateEnd")),
-            column(width=2, align = 'center',uiOutput("baseTemp"))
+            column(width=3, align = 'center',uiOutput("baseTemp"))
           ),
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",

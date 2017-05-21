@@ -1,30 +1,26 @@
 <h3>Introduction</h3>
 
-<p>This site accesses daily weather station data for the period 1968 to the current day for 600 stations. This is used to make calculations for chilling requirements and heating.</p>
-<p>Options are selected from the sidebar and the calculation is redone. Chilling can be calculated as either Chill Portions, Chill Units or Chill Hours.</p>
+<p>This site accesses daily weather station data for the period 1968 to the current year for 600 locatons across Australia. This data is used to make calculations for the accumulation of winter chill and growing degree days/hours.</p>
+
+<p>Because the chill and growing degree day calculations are based on weather data from the Bureau of Meteorology, the calculations can only be updated when the weather data becomes available. The weather data from yesterday is usually available after about midday (AEST).</p>
+
 <p>All calculations are performed using the chillR package of Luedeling et al. (2013) & Luedeling (2017).</p>
 
-<h3>Where and When</h3>
+<h3>Selecting Locations</h3>
 
-<p>There are 600 locations in the database which can be selected from the Locations tab. The map is zoomable and pannable in the normal way. Select a station by clicking the marker and selecting with Chill or GDH to see the data. Initially the map is zoomed to the Granite Belt.</p>
-
-<p>Two locations can be selected, clicking on new locations adds to the bottom of this list of two. For example, if you had selected Applethorpe and then Warwick, the graphs would show Applethorpe at the top and Warwick below. If you then selected Manjimup, Warwick would be at the top and Manjimup below.</p>
-
-<p>Another way to use the compare feature is to select a station for the top graph, e.g. Tatura, then select a comparison station for the bottom graph. Check the <emp>Fix Stn</emp> box, to keep Tatura at the top and compare it with subsequent selections.</p>
-
-<p>Years from 1968 to the present day can be chosen. The latest weather day is available after about midday (AEST) and is current then up to yesterday. The Year To Date option is useful during the current year when one wants to concentrate on the progress of the chill or heat accumulation for the most recent period. Data are displayed with the long-term average, and the warmest and coolest years.
-<p>The base period from 1981 to 2010 is used for the long-term averages etc.</p>
-<h3>Selecting Sites</h3>
-<p>Sites can be selected in by selecting a growing region and clicking on a blue marker, searching for weather station and selecting from the responses, or searching for a locality and selecting a from the responses. Alternatively, you can zoom in or our on the map and pan the map to select a station.</p>
+Locations are selected from the <i>Locations</i> tab by clicking the blue marker for that location on the map. Once a location has been selected, it will appear on the top left hand side of the screen. There are a number of ways to locate the blue marker you’re interested in:
+<ol>
+<li>Select a growing region and wait for the map to identify the locations available for that region.</li>
+<li>Search for a weather station and select from the list of responses.</li>
 
 <p>Searching for a station (1 of the 600) uses a simple searching method that matches the letters entered. "ben" will match </p>
 <ul>
-<li>Bencubbin</li>
-<li>Bendigo Airport</li>
-<li>Launceston (Ti Tree Bend)</li>
+<li><b>Ben</b>cubbin</li>
+<li><b>Ben</b>digo Airport</li>
+<li>Launceston (Ti Tree <b>Ben</b>d)</li>
 </ul>
-
-<p>Selecting from the list makes this the station of interest</p>
+</br>
+<li>Selecting from the list makes this the station of interest</li>
 
 <p>Searching for a locality works by matching Towns that start with the letters enetered. "ben" will match </p>
 <ul>
@@ -36,18 +32,29 @@
 
 <p>Results do not show up until the list of possiblties is less than 200 and the selection only moves the map to that locality so that you can search for a station (blue marker) </p>
 
+<li>Zoom in or out on the map, and pan the map to select a station.</li>
+</ol>
+
+<h3>Viewing the data</h3>
+<p>Once a location has been selected, simply click on the tabs for <i>Chill</i>, <i>Growing Degrees</i> or <i>Temperature</i> to view the graphs for that location. Once you have clicked on one of these tabs, select the year of data you want to see from the drop down menu at the top of the screen. You can also change the start date and end date by using the drop down calendars. This is particularly useful for chill graphs where you might want to calculate chill from 1 Jun, instead of 1 Mar for example. To close the calendar simply click outside of it.
+The graphs automatically show the data for the year selected, compared to the long-term historical record (from 1981 to 2010). When you hover your cursor over a particular spot on the graph, the values for that particular date will be flagged.</p>
+
 <h3>Chill Accumulation</h3>
 <p>Chilling can be calculated in either Chill Portions (Erez et al. 1990), Chill Hours (Bennet 1949, Weinberger 1950) or Chill Units (Richardson et al. 1974).</p>
 
 <h3>Growing Degrees</h3>
 <p>Growing Degree Hours (GDH) (Anderson et al 1974) or Growing Degree Days (GDD) are calculated when the user selects the "Growing Degrees" tab. GDH are calculated using the methodology of Anderson et al. (1986) that uses four thresholds to calculate the accumulation of yield.
-GDD are calculated by subtracting 10ºC (or which ever base temperature is used) from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10ºC. These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.</p>
-<br>
-<p>
+GDD are calculated by subtracting 10<sup>o</sup>C (or which ever base temperature is used) from the average daily temperature. Only positive values are accumulated, i.e. temperatures greater than 10<sup>o</sup>C. These can be accumulated from 1 January (default) or set at a later date using the date selector box. To close the calendar simply click outside of it.</p>
+
+<h3>Comparison between two locations</h3>
+<p>It is possible to compare the chill, growing degree and temperature data from two different locations. To do this, simply click on the blue marker for the first location (which will appear at the top left hand side of the screen) and then select a second blue marker for the location you wish to compare. This second location will then appear below the first at the top of the screen.
+Clicking on new locations adds to the bottom of this list of two. For example, if you had selected Applethorpe and then Warwick, the graphs would show Applethorpe at the top and Warwick below. If you then selected Manjimup, Warwick would be at the top and Manjimup below.
+Another way to use the compare feature is to select a location for the top graph, e.g. Tatura, then select a comparison station for the bottom graph. Check the <i>Keep upper station</i> to keep Tatura at the top and compare it with subsequent selections.</p>
 
 
 <h3>Interaction with the Graph</h3>
-<p>The data presented in each of the graphical tabs, Chill, Growing Degrees and Temperature, show the average and a shaded area that represents the upper 10% and lower 10% of years. If this is too much information click on the thick bar object that is pointing to the left. This will change from compare mode to show only the closest value. The closest value is the default in the Temperature graphs.</p>
+<p>The data presented in each of the graphical tabs, <i>Chill</i>, <i>Growing Degrees</i> and <i>Temperature</i>, show the average and a shaded area that represents the upper 10% and lower 10% of years. If this is too much information click on the thick bar object that is pointing to the left. This will change from compare mode to show only the closest value. The closest value is the default in the Temperature graphs.</p>
+
 <p>In the screen capture below the the graph is in compare mode, i.e. the two bars pointing left are highlighted </p>
 <img src='HoverMode.png'><br>
 

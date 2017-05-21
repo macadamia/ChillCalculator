@@ -5,6 +5,8 @@ library(shinysky)
 library(leaflet)
 library(plotly)
 
+
+
 source('helper.R')
 
 
@@ -16,7 +18,7 @@ shinyServer(function(input, output,session) {
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
 
-  site <- reactiveValues(currentlLoc=startStn,name='Applethorpe')
+  #site <- reactiveValues(currentlLoc=startStn,name='Applethorpe')
 
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))
 
@@ -27,6 +29,7 @@ shinyServer(function(input, output,session) {
   })
 
   towns <- reactive({
+    print('Search for Towns')
     searchForPlace(input$Town)
   })
 
@@ -39,7 +42,7 @@ shinyServer(function(input, output,session) {
     }
     ## replace the UI with a table or something using stns$df
     if(is.na(siteInfo$Name[stns$df[1,1]])){
-      HTML(paste("<br/>Select a Location from Locations tab"))
+      HTML(paste("<br/><h3>Applethorpe</h3>"))
     } else {
       if(is.na(stns$df[2,1])){
         HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"</h3>"))
@@ -123,30 +126,10 @@ shinyServer(function(input, output,session) {
 
   output$baseTemp <- renderUI({
     if(input$tabs == 'Growing Degrees'){
-      textInput('baseTemp',h4("Base Temperature (ºC)"),"10",'150px')
+      textInput('baseTemp',h4("Base Temperature (ºC)"),"10",'300px')
     }
   })
 
-
-
-  # output$sliderForHeight <-renderUI({
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     sliderInput("JPEGHeight", "Plot Height", min = 400, max = 1200,step = 100, value = 600)
-  #   }
-  # })
-
-  loadTheData <- function(theStn) {
-    # if(is.null(site$currentLoc)){
-    #   site$currentLoc <- startStn
-    # }
-    #stn<-siteInfo$stnID[site$currentLoc]
-
-    stn <- siteInfo$stnID[theStn]
-    rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-    print(rdata)
-
-    load(rdata)
-  }
 
 
   ### Chill Plot ###
@@ -159,7 +142,7 @@ shinyServer(function(input, output,session) {
         stns$df[1,1] <- startStn
         print(stns$df)
       }
-      loadTheData(stns$df[1,1])
+      #loadTheData(stns$df[1,1])
       startJDay <- as.numeric(format(input$startDate,'%j'))
       doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate) #selectedYear$Year
     }) #renderPlot
@@ -174,7 +157,7 @@ shinyServer(function(input, output,session) {
       if(is.na(stns$df[2,1])){
         return(NULL)
       }
-      loadTheData(stns$df[2,1]) # stns$df[1,1] as the location
+      #loadTheData(stns$df[2,1]) # stns$df[1,1] as the location
       startJDay <- as.numeric(format(input$startDate,'%j'))
       doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$startDate,input$endDate) #selectedYear$Year
     }) #renderPlot
@@ -223,7 +206,7 @@ shinyServer(function(input, output,session) {
     if(is.na(stns$df[1,1])){
       stns$df[1,1] <- startStn
     }
-    loadTheData(stns$df[1,1])
+    #loadTheData(stns$df[1,1])
     doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[1,1]) # selectedYear$Year
   })
 
@@ -234,7 +217,7 @@ shinyServer(function(input, output,session) {
     if(is.na(stns$df[2,1])){
       return(NULL)
     }
-    loadTheData(stns$df[2,1])
+    #loadTheData(stns$df[2,1])
     doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[2,1]) #selectedYear$Year
   })
 
@@ -326,7 +309,7 @@ shinyServer(function(input, output,session) {
 
   observeEvent ( input$stnFound, {
     this <- as.numeric(input$stnFound)
-    site$currentLoc <- this
+    ####site$currentLoc <- this
     rlat <- siteInfo$latitude[this]
     rlng <- siteInfo$longitude[this]
     proxy <- leafletProxy("map")
@@ -362,7 +345,7 @@ shinyServer(function(input, output,session) {
         HTML(paste(warning,siteInfo$Name[rowNumber],'recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/>',sep=' '))
       })
     }
-    site$currentLoc <- rowNumber
+    ####site$currentLoc <- rowNumber
     if(nrow(stns$df) == 0){
       stns$df <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
     } else if(nrow(stns$df) == 1){
