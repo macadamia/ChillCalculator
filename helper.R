@@ -64,14 +64,14 @@ searchForLocation <- function(location){
 
 searchForPlace<- function(location){
   #listOfTowns
-  #print(location)
+  ##print(location)
   this <- which(starts_with(gaz$PlaceName,location))
-  #cat('this is',length(this),'\n')
+  ##cat('this is',length(this),'\n')
   if(length(this) == 1){
     return(list(searchedSite=gaz$PlaceStatePostCode[this],searchedLat=gaz$Latitude[this],searchedLng=gaz$Longitude[this],these=this))
   }
   if(length(this) < 1){
-    print('nothing')
+    #print('nothing')
     return(NULL)
   }
   if(length(this) > 1){
@@ -114,7 +114,7 @@ getMet<-function(stn,startDate,endDate){
     theurl<-paste(theurl,"&ddStart=",sDay,"&mmStart=",sMth,"&yyyyStart=",sYear,"&ddFinish=",eDay,"&mmFinish=",eMth,sep="")
     theurl<-paste(theurl,"&yyyyFinish=",eYear,sep="")
     conn<-url(theurl)
-    print(theurl)
+    #print(theurl)
     t.p<-try(hdr <- readLines(conn, 20, FALSE))
     if(!inherits(t.p, "try-error")){
       tab.1 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
@@ -126,7 +126,7 @@ getMet<-function(stn,startDate,endDate){
     sDate <- format(startDate,'%Y%m%d')
     eDate <- format(endDate,'%Y%m%d')
     theurl <- paste('https://www.longpaddock.qld.gov.au/cgi-bin/silo/PatchedPointDataset.php?format=apsim&station=',stn,'&start=',sDate,'&finish=',eDate,'&username=',longPaddock$Username,'&password=',longPaddock$Password,sep='')
-    print(theurl)
+    #print(theurl)
     res <- try(d <- getURL(theurl),silent = T)
     if(inherits(res,'try-error')){
       return(NULL)
@@ -145,7 +145,7 @@ getMet<-function(stn,startDate,endDate){
 
 getLTCold <- function(tab.LT,sJDay,eJDay, lat, CHILLTYPE){
 
-  print(dim(tab.LT))
+  #print(dim(tab.LT))
   year <- tab.LT[,1]
   day <- tab.LT[ ,2]
   maxt <- tab.LT[,4]
@@ -250,7 +250,7 @@ getLTGDH<-function(stn,startDate,endDate,metOnly){ #long-term data for GDH
 #   yr <- ltYears[i]
 #   thisStart <- as.Date(paste(yr,sJDay,sep='-'),'%Y-%j')
 #   thisEnd <- as.Date(paste(yr+nYrs,eJDay,sep='-'),'%Y-%j')
-#   print(length(seq.Date(thisStart,thisEnd,'days')))
+#   #print(length(seq.Date(thisStart,thisEnd,'days')))
 # }
 
 
@@ -325,14 +325,14 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
   sYear <- as.numeric(format(STARTDATE,'%Y'))
   eYear <- as.numeric(format(EDATE,'%Y'))
   if(eYear != sYear){
-    print('Update the end year from previous multiyear')
+    #print('Update the end year from previous multiyear')
     eJDay <- as.numeric(format(EDATE,'%j'))
     EDATE <- as.Date(paste(sYear,eJDay,'sep=-'),'%Y-%j')
     #now update the display
 
   }
 
-  cat(as.character(STARTDATE),' ',as.character(EDATE),'\n')
+  #cat(as.character(STARTDATE),' ',as.character(EDATE),'\n')
 
   Year <- as.numeric(YEAR)
   sJDay <- as.numeric(format(STARTDATE,'%j'))
@@ -352,13 +352,13 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
 
-  cat('Processing',stnName,'\n')
+  #cat('Processing',stnName,'\n')
   # rdata <- file.path('Data',paste(stn,'.RData',sep=''))
   # load(rdata)
 
   tab.1<-getMet(stn,STARTDATE,EDATE)
   if(!any(is.na(tab.1))){
-    cat('Got met, now calc chill for',Year,'\n')
+    #cat('Got met, now calc chill for',Year,'\n')
     res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
     chill <- res$chill
     maxChill <- res$maxChill
@@ -379,10 +379,10 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
     chill <- chill[which(jday == sJDay):which(jday == eJDay)]
 
   }
-  cat('Get LT Data\n')
+  #cat('Get LT Data\n')
   tab.LT <- getMet(stn,as.Date('1981-01-01'),as.Date('2010-12-31'))
   if(!is.null(tab.LT)){
-    cat('Calc LT Chill\n')
+    #cat('Calc LT Chill\n')
     LTData <- getLTCold(tab.LT,sJDay, eJDay,lat, CHILLTYPE)
 
 
@@ -409,8 +409,8 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
       chillMessage <- paste(stnName,'No Chill has accumulated')
     }
 
-    cat('create data frame theData\n')
-    cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
+    #cat('create data frame theData\n')
+    #cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
     theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
 
     b <- list(
@@ -421,7 +421,7 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
       tickfont = f1
     )
 
-    cat('do the plot\n')
+    #cat('do the plot\n')
     if(CHILLTYPE != 3){
       p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
                    line=list(color='transparent'),showlegend = F) %>%
@@ -470,13 +470,13 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   stn<-siteInfo$stnID[LOCATION]
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
-  #cat(Year,sYear,eYear,'\n')
+  ##cat(Year,sYear,eYear,'\n')
   #if(sYear == eYear){ # just one year so grab the ready-made data
-  print("Loading std data")
+  #print("Loading std data")
   # rdata <- file.path('Data',paste(stn,'.RData',sep=''))
   # load(rdata)
   #}
-  cat('Latitude',lat,'\n')
+  #cat('Latitude',lat,'\n')
   tab.1 <- getMet(stn,SDATE,EDATE)
   if(!any(is.na(tab.1))){
     if(GTYPE == 1) {
@@ -507,7 +507,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
 
   #if( (as.numeric(BASETEMP) != GDDb & GTYPE == 2) | sYear != eYear ){ # GDD
   if(GTYPE == 2){
-    print('this is the long term met data only')
+    #print('this is the long term met data only')
     metOnly <- T
     tab.LT <- getLTGDH(stn,SDATE,EDATE,metOnly) # this is the long term met data only
     #GDD
@@ -525,7 +525,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   }
 
   if(GTYPE == 1){ #} & sYear != eYear){ # recalculate the GDH
-    print("recalculate the GDH")
+    #print("recalculate the GDH")
     metOnly <- F
     newLT <- getLTGDH(stn,SDATE,EDATE,metOnly) # get the long term GDH data for this range of days
     GDH <- colMeans(newLT)
@@ -656,27 +656,27 @@ getFName <- function(LOCATION,YEAR,CTYPE,GTYPE,TABNAME){
   paste(siteInfo$stnID[as.numeric(LOCATION)],YEAR,dataType,sep='_')
 }
 
-makePDF <- function(YEAR,CHILLTYPE,LOCATION,HQ){
-  pdf(file='myGenerated.pdf',width=12,height=8)
-  doThePlot(YEAR,CHILLTYPE,LOCATION,HQ)
-  dev.off()
-}
-
-makeJPEG <- function(YEAR,CTYPE,GTYPE,LOCATION,DATESTART,DATEEND,HEIGHT,TABS,HQ){
-  WIDTH = HEIGHT * 1200 / 800
-  cat(HEIGHT,WIDTH,'\n')
-  jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
-  if(TABS == 'Growing Degrees') {
-    doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,HQ)
-  }
-  if(TABS == 'Chill'){
-    startJDay <- as.numeric(format(DATESTART,'%j'))
-    doThePlot(YEAR,CTYPE,LOCATION,DATESTART,HQ)
-  }
-  if(TABS == 'Temperature'){
-    doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION,1,HQ)
-  }
-
-  dev.off()
-}
+# makePDF <- function(YEAR,CHILLTYPE,LOCATION,HQ){
+#   pdf(file='myGenerated.pdf',width=12,height=8)
+#   doThePlot(YEAR,CHILLTYPE,LOCATION,HQ)
+#   dev.off()
+# }
+#
+# makeJPEG <- function(YEAR,CTYPE,GTYPE,LOCATION,DATESTART,DATEEND,HEIGHT,TABS,HQ){
+#   WIDTH = HEIGHT * 1200 / 800
+#   #cat(HEIGHT,WIDTH,'\n')
+#   jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
+#   if(TABS == 'Growing Degrees') {
+#     doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,HQ)
+#   }
+#   if(TABS == 'Chill'){
+#     startJDay <- as.numeric(format(DATESTART,'%j'))
+#     doThePlot(YEAR,CTYPE,LOCATION,DATESTART,HQ)
+#   }
+#   if(TABS == 'Temperature'){
+#     doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION,1,HQ)
+#   }
+#
+#   dev.off()
+# }
 

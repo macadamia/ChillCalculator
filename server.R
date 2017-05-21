@@ -29,7 +29,7 @@ shinyServer(function(input, output,session) {
   })
 
   towns <- reactive({
-    print('Search for Towns')
+    #print('Search for Towns')
     searchForPlace(input$Town)
   })
 
@@ -145,7 +145,7 @@ shinyServer(function(input, output,session) {
       }
       if(is.na(stns$df[1,1])){
         stns$df[1,1] <- startStn
-        print(stns$df)
+        #print(stns$df)
       }
       #loadTheData(stns$df[1,1])
       startJDay <- as.numeric(format(input$startDate,'%j'))
@@ -171,19 +171,19 @@ shinyServer(function(input, output,session) {
   ### GDH Plot ###
   observe({
     output$GDHPlot <- renderPlotly({
-      print("gType and startDate...")
+      #print("gType and startDate...")
       if(  is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
-        print(input$gType)
-        print(input$startDate)
-        print(input$endDate)
-        print(input$baseTemp)
+        #print(input$gType)
+        #print(input$startDate)
+        #print(input$endDate)
+        #print(input$baseTemp)
         return(NULL)
       }
       if(is.na(stns$df[1,1])){
         stns$df[1,1] <- startStn
       }
       #loadTheData(stns$df[1,1])
-      print('About to run doTheHeatPlot')
+      #print('About to run doTheHeatPlot')
       doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$baseTemp) #selectedYear$Year
 
     }) #renderPlot
@@ -354,22 +354,22 @@ shinyServer(function(input, output,session) {
     if(nrow(stns$df) == 0){
       stns$df <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
     } else if(nrow(stns$df) == 1){
-      print("add to 2nd row")
+      #print("add to 2nd row")
       tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
       stns$df <- rbind(stns$df, tmp)
     } else {
       #move 2nd row to first row and add to 2nd row, or replace 2 depending on FixTopStn
       if(stns$df$row[2] == rowNumber){
-        print("already have it, replace the df with just this stn")
+        #print("already have it, replace the df with just this stn")
         stns$df <- stns$df[2,]
       } else { # replace or shift
         tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
         if(input$FixTopStn){
-          print("keep top")
+          #print("keep top")
           stns$df <- stns$df[1,]
           stns$df <- rbind(stns$df, tmp)
         } else {
-          print("replace top")
+          #print("replace top")
           stns$df <- stns$df[2,]
           stns$df <- rbind(stns$df, tmp)
         }
@@ -377,12 +377,12 @@ shinyServer(function(input, output,session) {
     }
     if(nrow(stns$df) == 2){
       if(stns$df[1,1] == stns$df[2,1]){
-        print("Two the same")
+        #print("Two the same")
         stns$df <- stns$df[1,]
       }
     }
 
-    print(stns$df)
+    #print(stns$df)
   })
 
 
