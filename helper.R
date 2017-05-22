@@ -1,11 +1,11 @@
 siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
-longPaddock <- readRDS('Data/LongPaddock.rds')
 
 useAPSIM <- T
 
 if(!useAPSIM){
+  longPaddock <- readRDS('Data/LongPaddock.rds')
   library(RCurl)
 }
 

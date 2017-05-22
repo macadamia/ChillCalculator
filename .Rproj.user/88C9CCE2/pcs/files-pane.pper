@@ -1,8 +1,8 @@
 {
-    "path" : "~/GitHub/ChillCalculator/Data",
+    "path" : "~/GitHub/ChillCalculator",
     "sortOrder" : [
         {
-            "ascending" : false,
+            "ascending" : true,
             "columnIndex" : 2
         }
     ]
