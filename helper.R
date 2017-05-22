@@ -1,6 +1,13 @@
 siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
+longPaddock <- readRDS('Data/LongPaddock.rds')
+
+useAPSIM <- T
+
+if(!useAPSIM){
+  library(RCurl)
+}
 
 gaz$PlaceName <- as.character(gaz$PlaceName)
 
@@ -11,6 +18,7 @@ starts_with <- function(vars, match, ignore.case = TRUE) {
   if (ignore.case) vars <- tolower(vars)
   substr(vars, 1, n) == match
 }
+
 
 cleanup <- which(siteInfo$Name == 'Warburton Airfield')
 siteInfo <- siteInfo[-cleanup,]
@@ -56,14 +64,14 @@ searchForLocation <- function(location){
 
 searchForPlace<- function(location){
   #listOfTowns
-  #print(location)
+  ##print(location)
   this <- which(starts_with(gaz$PlaceName,location))
-  #cat('this is',length(this),'\n')
+  ##cat('this is',length(this),'\n')
   if(length(this) == 1){
     return(list(searchedSite=gaz$PlaceStatePostCode[this],searchedLat=gaz$Latitude[this],searchedLng=gaz$Longitude[this],these=this))
   }
   if(length(this) < 1){
-    print('nothing')
+    #print('nothing')
     return(NULL)
   }
   if(length(this) > 1){
@@ -94,36 +102,152 @@ makeHourly<-function(tmp){
   return(THourly)
 }
 
-
-getMet<-function(stn,Year){
-  theurl<-paste(THEURL,stn,sep="")
-  theurl<-paste(theurl,"&ddStart=",1,"&mmStart=",1,"&yyyyStart=",Year,"&ddFinish=",31,"&mmFinish=",12,sep="")
-  theurl<-paste(theurl,"&yyyyFinish=",Year,sep="")
-  conn<-url(theurl)
-  t.p<-try(hdr <- readLines(conn, 20, FALSE))
-  if(!inherits(t.p, "try-error")){
-    tab.1 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
-    return (tab.1)
+getMet<-function(stn,startDate,endDate){
+  if(useAPSIM){
+    sYear <- as.numeric(format(startDate,'%Y'))
+    sMth <- as.numeric(format(startDate,'%m'))
+    sDay <- as.numeric(format(startDate,'%d'))
+    eYear <- as.numeric(format(endDate,'%Y'))
+    eMth <- as.numeric(format(endDate,'%m'))
+    eDay <- as.numeric(format(endDate,'%d'))
+    theurl<-paste(THEURL,stn,sep="")
+    theurl<-paste(theurl,"&ddStart=",sDay,"&mmStart=",sMth,"&yyyyStart=",sYear,"&ddFinish=",eDay,"&mmFinish=",eMth,sep="")
+    theurl<-paste(theurl,"&yyyyFinish=",eYear,sep="")
+    conn<-url(theurl)
+    #print(theurl)
+    t.p<-try(hdr <- readLines(conn, 20, FALSE))
+    if(!inherits(t.p, "try-error")){
+      tab.1 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
+      return (tab.1)
+    } else {
+      return(NA)
+    }
   } else {
-    return(NA)
+    sDate <- format(startDate,'%Y%m%d')
+    eDate <- format(endDate,'%Y%m%d')
+    theurl <- paste('https://www.longpaddock.qld.gov.au/cgi-bin/silo/PatchedPointDataset.php?format=apsim&station=',stn,'&start=',sDate,'&finish=',eDate,'&username=',longPaddock$Username,'&password=',longPaddock$Password,sep='')
+    #print(theurl)
+    res <- try(d <- getURL(theurl),silent = T)
+    if(inherits(res,'try-error')){
+      return(NULL)
+    } else {
+
+      info <- strsplit(d,'\n')[[1]]
+      hdr <- strsplit(info[22],' +')[[1]]
+      data <-info[24:length(info)]
+
+      tab.1 <- read.table(textConnection(data))
+      return(tab.1)
+    }
+  }
+
+}
+
+getLTCold <- function(tab.LT,sJDay,eJDay, lat, CHILLTYPE){
+
+  #print(dim(tab.LT))
+  year <- tab.LT[,1]
+  day <- tab.LT[ ,2]
+  maxt <- tab.LT[,4]
+  mint <- tab.LT[,5]
+
+  chillWeather<-data.frame(year,day,maxt,mint)
+  colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
+  THourly<-make_hourly_temps(lat,chillWeather)
+  stack<-stack_hourly_temps(hour_file=THourly)
+  #get chill and heating info
+  ch<-chilling_hourtable(stack,sJDay)
+  Hour <- ch$Hour
+  JDay <- ch$JDay[Hour == 24]
+  Year <- ch$Year[Hour == 24]
+  if(CHILLTYPE == 1){
+    cold <- ch$Chill_Portions[Hour == 24]
+
+  }
+  if(CHILLTYPE == 2){
+    cold <- ch$Chilling_Hours[Hour == 24]
+  }
+  if(CHILLTYPE == 3){
+    cold <- ch$Chill_Units[Hour == 24]
+  }
+
+  cold.tab <- tapply(cold,list(Year,JDay),mean)[,sJDay:eJDay]
+
+
+  CU <- colMeans(cold.tab)
+  CUHot <- apply(cold.tab,2,quantile,probs=0.1,na.rm=T)
+  CUCold <- apply(cold.tab,2,quantile,probs=0.9,na.rm=T)
+
+  return(list(CU=CU,CUHot=CUHot,CUCold=CUCold))
+
+}
+
+getLTGDH<-function(stn,lat,startDate,endDate,metOnly){ #long-term data for GDH
+  sJDay <- as.numeric(format(startDate,'%j'))
+  sYear <- as.numeric(format(startDate,'%Y'))
+
+  eJDay <- as.numeric(format(endDate,'%j'))
+  eYear <- as.numeric(format(endDate,'%Y'))
+
+  nDays <- as.numeric(endDate - startDate) + 1
+  ltYears <- seq(1981,2010)
+  nYrs <- eYear - sYear  # allows for the situation where we look from one year to the next, i.e. across summer
+
+  ltStart <- as.Date(paste(1981,sJDay,sep='-'),'%Y-%j')
+  #here's  a thing
+  if(leap_year(eYear)){
+    if(eJDay == 366){
+      eJDay <- 365
+    }
+  }
+  ltEnd <- as.Date(paste(2010+nYrs,eJDay,sep='-'),'%Y-%j')
+
+  tab.LT <- getMet(stn,ltStart,ltEnd)
+
+  if(is.null(tab.LT)){
+    return(NULL)
+  } else {
+    if(metOnly){
+      return(tab.LT)
+    } else{
+      newGDH <- matrix(NA,nrow=length(ltYears), ncol = nDays)
+      year <- tab.LT[,1]
+      day <- tab.LT[ ,2]
+      theseDates <- as.Date(paste(year,day,sep='-'),'%Y-%j')
+
+      # fing leap years
+      for(i in 1:length(ltYears)){
+        yr <- ltYears[i]
+        thisStart <- as.Date(paste(yr,sJDay,sep='-'),'%Y-%j')
+        thisEnd <- as.Date(paste(yr+nYrs,eJDay,sep='-'),'%Y-%j')
+        these <- which(theseDates >= thisStart & theseDates <= thisEnd)
+        tab.sub <- tab.LT[these, ]
+        results <- calcHeat(tab.sub,lat, sJDay) #return(list(gdh=gdh,units=units,maxHeat=maxHeat,jday=ch$JDay[these],hours=ch$Hour[these]))
+        hours <- results$hours
+        leapYear <- F
+        for(y in seq(yr,(yr+nYrs))){
+          leapYear <- leap_year(y)
+        }
+        if(leapYear){
+          theDates <- seq.Date(as.Date(paste(yr,sJDay,sep='-'),'%Y-%j'),as.Date(paste(yr+nYrs,eJDay,sep='-'),'%Y-%j'),'days')
+          leapdayIndex <- grep("02-29",as.character(theDates))
+          if(length(leapdayIndex) > 0 ) {
+            gdh <- results$gdh[hours==24][-leapdayIndex]
+          } else {
+            gdh <- results$gdh[hours==24]
+          }
+        } else {
+          gdh <- results$gdh[hours==24]
+        }
+        newGDH[yr-1980,1:length(gdh)] <- gdh
+      }
+      return(newGDH)
+    }
   }
 }
 
-getMetLT<-function(stn){ #long-term data
-  theurl<-paste(THEURL,stn,sep="")
-  theurl<-paste(theurl,"&ddStart=",1,"&mmStart=",1,"&yyyyStart=",1981,"&ddFinish=",31,"&mmFinish=",12,sep="")
-  theurl<-paste(theurl,"&yyyyFinish=",2010,sep="")
-  conn<-url(theurl)
-  t.p<-try(hdr <- readLines(conn, 20, FALSE))
-  if(!inherits(t.p, "try-error")){
-    tab.1 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
-    return (tab.1)
-  } else {
-    return(NA)
-  }
-}
 
-calcChill <- function(tab.1,lat,sJDay,eJDay,inputcType){
+calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
   year <- tab.1[,1]
   day <- tab.1[ ,2]
   maxt <- tab.1[,4]
@@ -137,17 +261,17 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,inputcType){
   ch<-chilling_hourtable(stack,sJDay)
 
 
-  if(inputcType == 1){
+  if(CHILLTYPE == 1){
     chill<-ch$Chill_Portions
     units<-'Chill Portions'
     these<-1:length(ch$JDay)
   }
-  if(inputcType == 2){
+  if(CHILLTYPE == 2){
     chill<-ch$Chilling_Hours
     units<-'Chiling Hours < 7.2ºC'
     these<-1:length(ch$JDay)
   }
-  if(inputcType == 3){
+  if(CHILLTYPE == 3){
     these<-which(ch$JDay >= sJDay & ch$JDay <= eJDay)
     chill<-ch$Chill_Units[these]
     units<-'Utah Chill Units'
@@ -158,14 +282,16 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,inputcType){
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
-calcHeat <- function(tab.1,lat,sJDay,eJDay){
-  year <- tab.1[,1]
-  day <- tab.1[ ,2]
-  maxt <- tab.1[,4]
-  mint <- tab.1[,5]
+calcHeat <- function(tab.met,lat,sJDay){
+  #cat('just arrived calcHeat lat',lat,'\n')
+  year <- tab.met[,1]
+  day <- tab.met[ ,2]
+  maxt <- tab.met[,4]
+  mint <- tab.met[,5]
 
   chillWeather<-data.frame(year,day,maxt,mint)
   colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
+  #cat('calcHeat lat',lat,'\n')
   THourly<-make_hourly_temps(lat,chillWeather)
   stack<-stack_hourly_temps(hour_file=THourly)
   #get chill and heating info
@@ -176,36 +302,32 @@ calcHeat <- function(tab.1,lat,sJDay,eJDay){
   these<-1:length(ch$JDay)
 
   maxHeat<-round(max(gdh),1)
-
+  #cat('leaving calcHeat lat',lat,'\n')
   return(list(gdh=gdh,units=units,maxHeat=maxHeat,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
 
-calcLT <- function(tab.1,lat,sJDay){ # long-Term data
-  year <- tab.1[,1]
-  day <- tab.1[ ,2]
-  maxt <- tab.1[,4]
-  mint <- tab.1[,5]
+#doThePlot(input$yearInput,input$cType,site$currentLoc,input$startDate)
+doThePlot <- function(YEAR,CHILLTYPE,LOCATION,STARTDATE,EDATE){
 
-  chillWeather<-data.frame(year,day,maxt,mint)
-  colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
-  THourly<-make_hourly_temps(lat,chillWeather)
-  stack<-stack_hourly_temps(hour_file=THourly)
-  #get chill and heating info
-  ch<-chilling_hourtable(stack,sJDay)
-
-  return(ch)
-}
-
-#doThePlot(input$yearInput,input$cType,site$currentLoc,input$Y2DateChill,input$startDate)
-doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
-
-  # YEAR<-2010
-  # CHILLTYPE<-3
-  # Y2DATE<-1
+  # YEAR<-2017
+  # CHILLTYPE<-1
   # LOCATION<-317
-  # STARTDATE<-as.Date('2016-5-1')
-  # EDATE<-as.Date('2016-9-1')
+  # STARTDATE<-as.Date('2017-3-1')
+  # EDATE<-as.Date('2017-05-21')
+
+  #need to check the year in case we did a GD with across the years
+  sYear <- as.numeric(format(STARTDATE,'%Y'))
+  eYear <- as.numeric(format(EDATE,'%Y'))
+  if(eYear != sYear){
+    #print('Update the end year from previous multiyear')
+    eJDay <- as.numeric(format(EDATE,'%j'))
+    EDATE <- as.Date(paste(sYear,eJDay,'sep=-'),'%Y-%j')
+    #now update the display
+
+  }
+
+  #cat(as.character(STARTDATE),' ',as.character(EDATE),'\n')
 
   Year <- as.numeric(YEAR)
   sJDay <- as.numeric(format(STARTDATE,'%j'))
@@ -225,14 +347,13 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
 
-  cat('loading',stnName,'\n')
+  #cat('Processing',stnName,'\n')
+  # rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+  # load(rdata)
 
-  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-  load(rdata)
-
-  tab.1<-getMet(stn,Year)
+  tab.1<-getMet(stn,STARTDATE,EDATE)
   if(!any(is.na(tab.1))){
-
+    #cat('Got met, now calc chill for',Year,'\n')
     res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
     chill <- res$chill
     maxChill <- res$maxChill
@@ -243,95 +364,99 @@ doThePlot <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,STARTDATE,EDATE){
     jday <- jday[hour24]
     chill <- chill[hour24]
 
+    #does eJDay == tail(jday,1)
+    todayDate <- format(EDATE,'%d %b %Y')
+    if( eJDay != tail(jday,1) ){
+      eJDay <- tail(jday,1)
+      actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
+      todayDate <- format(actualEndDate,'%d %b %Y')
+    }
+    chill <- chill[which(jday == sJDay):which(jday == eJDay)]
+
   }
-
-  if(CHILLTYPE == 1){
-    LTChill <- CP
-    LTHot <- CPHot
-    LTCold <- CPCold
-  }
-  if(CHILLTYPE == 2){
-    LTChill <- CH
-    LTHot <- CHHot
-    LTCold <- CHCold
-  }
-  if(CHILLTYPE == 3){
-    LTChill <- CU
-    LTHot <- CUHot
-    LTCold <- CUCold
-
-    LTChillStart <- LTChill[sJDay]
-    LTHotStart <- LTHot[sJDay]
-    LTColdStart <- LTCold[sJDay]
-
-    chillStart <- head(chill,1)
-  }
-
-  lastJDay <- 365
-  if(Y2DATE == 1){
-    lastJDay <- min(max(jday),lastJDay,eJDay)
-  }
-  JDays <- sJDay:lastJDay
+  #cat('Get LT Data\n')
+  tab.LT <- getMet(stn,as.Date('1981-01-01'),as.Date('2010-12-31'))
+  if(!is.null(tab.LT)){
+    #cat('Calc LT Chill\n')
+    LTData <- getLTCold(tab.LT,sJDay, eJDay,lat, CHILLTYPE)
 
 
-  if(CHILLTYPE == 1){
-    day34 <- jday[head(which(chill >= 34),1)]
-    day34Date <- format(as.Date(paste(Year,day34,sep='-'),'%Y-%j'),'%d %b')
-    #equiv chill hours
-    eqCH <- CH[day34]
-  }
+    LTChill <- LTData$CU
+    LTHot <- LTData$CUHot
+    LTCold <- LTData$CUCold
 
-  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-  if(CHILLTYPE != 3){
-    chill <- chill[sJDay:lastJDay]
-    LTHot <- LTHot[sJDay:lastJDay]
-    LTCold <- LTCold[sJDay:lastJDay]
+    JDays <- sJDay:eJDay
+
+    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+    nJdays <- length(JDays)
+
+    notNA <- which(!is.na(chill))
+
+    chill <- chill[notNA]
+
+    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+
+    today <- tail(chill,1)
+
+    if(today > 0){
+      chillMessage <- paste(stnName,"Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
+    } else {
+      chillMessage <- paste(stnName,'No Chill has accumulated')
+    }
+
+    #cat('create data frame theData\n')
+    #cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
+    theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
+
+    b <- list(
+      title = YLAB,
+      titlefont = f1,
+      showticklabels = TRUE,
+      tickangle = 0,
+      tickfont = f1
+    )
+
+    #cat('do the plot\n')
+    if(CHILLTYPE != 3){
+      p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+                   line=list(color='transparent'),showlegend = F) %>%
+      add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+      add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
+      layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
+    } else {
+      plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+                   line=list(color='transparent'),showlegend = F)  %>%
+      add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+      add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
+      layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
+    }
   } else {
-    nJdays <- length(seq(sJDay,lastJDay))
-    chill <- chill[1:nJdays]
-    chill <- chill - chillStart
-    LTHot <- LTHot[sJDay:lastJDay] - LTHot[sJDay]
-    LTCold <- LTCold[sJDay:lastJDay] - LTCold[sJDay]
-
-  }
-
-  today <- tail(chill,1)
-  todayDate <- format(EDATE,'%d %b %Y')
-  if(today > 0){
-    chillMessage <- paste(stnName,"Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
-  } else {
-    chillMessage <- paste(stnName,'No Chill has accumulated')
-  }
-
-  theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
-
-  b <- list(
-    title = YLAB,
-    titlefont = f1,
-    showticklabels = TRUE,
-    tickangle = 0,
-    tickfont = f1
-  )
-
-  if(CHILLTYPE != 3){
-    p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
-                 line=list(color='transparent'),showlegend = F) %>%
-    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
-    add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
-    layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
-  } else {
-    plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
-                 line=list(color='transparent'),showlegend = F)  %>%
-    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
-    add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
-    layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
+    #popup message
   }
 }
 
-#doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$Y2DateGDH,input$baseTemp)
-doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
+#doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$baseTemp)
+doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
+#
+  # YEAR <- '2016'
+  # YEAR2 <- '2016'
+  # GTYPE <- 2
+  # SDATE <- as.Date(paste(YEAR,'05-01',sep='-'))
+  # EDATE <- as.Date(paste(YEAR2,'12-31',sep='-'))
+  # LOCATION <- 317
+  # BASETEMP <- '10'
+
+  heatDates <- seq.Date(SDATE,EDATE,'days')
+  heatJDays <- as.numeric(format(heatDates,'%j'))
 
   Year <- as.numeric(YEAR)
+
+  sYear <- as.numeric(format(SDATE,'%Y'))
+  eYear <- as.numeric(format(EDATE,'%Y'))
+  sMth <- as.numeric(format(SDATE,'%m'))
+  eMth <- as.numeric(format(EDATE,'%m'))
+  sDay <- as.numeric(format(SDATE,'%d'))
+  eDay <- as.numeric(format(EDATE,'%d'))
 
   sJDay<-as.numeric(format(SDATE,'%j'))
   eJDay<-as.numeric(format(EDATE,'%j'))
@@ -341,15 +466,11 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
 
-  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-  load(rdata)
-
-  #currently this is all calendar year stuff
-
-  tab.1<-getMet(stn,Year)
+  tab.1 <- getMet(stn,SDATE,EDATE)
   if(!any(is.na(tab.1))){
     if(GTYPE == 1) {
-      res <- calcHeat(tab.1,lat,sJDay,eJDay)
+      #cat('Latitude',lat,'\n')
+      res <- calcHeat(tab.1,lat,sJDay)
       gdh <- res$gdh
       YLAB <- res$units
       maxGD <- res$maxGDH
@@ -359,32 +480,47 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
 
       jday <- jday[hour24]
       gdh <- gdh[hour24]
-      gdh[jday < sJDay] <- NA
+      #gdh[jday < sJDay] <- NA
       gd <- gdh
 
     } else {
-      gTmp <- ((tab.1[,'maxt'] + tab.1[,'mint']) / 2) - as.numeric(BASETEMP)
+      gTmp <- ((tab.1[,4] + tab.1[,5]) / 2) - as.numeric(BASETEMP)
       gTmp[gTmp < 0] <- 0
-      gdd <- cumsum(gTmp)
-      jday <- tab.1[,'day']
-      gdd[ jday < sJDay] <- NA
-      gd <- gdd - gdd[sJDay]
+      gd <- cumsum(gTmp)
+      # jday <- tab.1[,'day']
+      # gdd[ jday < sJDay] <- NA
+      #gd <- gdd - gdd[1]
       maxGD <- max(gd,na.rm=T)
       YLAB <- paste('Growing Degree Days (base =',BASETEMP,'ºC)')
     }
   }
 
-  if(as.numeric(BASETEMP) != GDDb & GTYPE == 2){ # GDD
-    tab.LT <- getMetLT(stn) # this is the long term data
+  #if( (as.numeric(BASETEMP) != GDDb & GTYPE == 2) | sYear != eYear ){ # GDD
+  if(GTYPE == 2){
+    #print('this is the long term met data only')
+    metOnly <- T
+    tab.LT <- getLTGDH(stn,lat,SDATE,EDATE,metOnly) # this is the long term met data only
     #GDD
-    gdd <- (tab.LT[,'maxt'] + tab.LT[,'mint'])/2 - as.numeric(BASETEMP)
+    gdd <- (tab.LT[,4] + tab.LT[,5])/2 - as.numeric(BASETEMP)
     gdd[gdd < 0] <- 0
-    gddTab <- tapply(gdd,list(tab.LT[,'year'],tab.LT[,'day']),max)
+    gddTab <- tapply(gdd,list(tab.LT[,1],tab.LT[,2]),max,na.rm=T)
 
-    gdd <- t(apply(gddTab,1,cumsum))
-    GDD <- colMeans(gdd)
-    GDDHot <- apply(gdd,2,quantile,probs=0.9,na.rm=T)
-    GDDCold <- apply(gdd,2,quantile,probs=0.1,na.rm=T)
+    #gdd <- t(apply(gddTab,1,sum,na.rm=T))
+    GDD <- colMeans(gddTab,na.rm=T)
+    GDD <- cumsum(GDD[heatJDays])
+    GDDHot <- apply(gddTab,2,quantile,probs=0.9,na.rm=T)
+    GDDHot <- cumsum(GDDHot[heatJDays])
+    GDDCold <- apply(gddTab,2,quantile,probs=0.1,na.rm=T)
+    GDDCold <- cumsum(GDDCold[heatJDays])
+  }
+
+  if(GTYPE == 1){ #} & sYear != eYear){ # recalculate the GDH
+    #print("recalculate the GDH")
+    metOnly <- F
+    newLT <- getLTGDH(stn,lat,SDATE,EDATE,metOnly) # get the long term GDH data for this range of days
+    GDH <- colMeans(newLT)
+    GDHHot <- apply(newLT,2,quantile,probs=0.9,na.rm=T)
+    GDHCold <- apply(newLT,2,quantile,probs=0.1,na.rm=T)
   }
 
   if(GTYPE == 1) {
@@ -398,35 +534,16 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
   }
 
 
-  if(sJDay !=1 ){
-    LTGD[jday < sJDay] <- NA
-    LTHot[jday < sJDay] <- NA
-    LTCold[jday < sJDay] <- NA
-
-    LTGD[jday >= sJDay] <- LTGD[jday >= sJDay] - LTGD[sJDay]
-    LTHot[jday >= sJDay] <- LTHot[jday >= sJDay] - LTHot[sJDay]
-    LTCold[jday >= sJDay] <- LTCold[jday >= sJDay] - LTCold[sJDay]
-  }
-
-  lastJDay <- 366
-  if(Y2DATE == 1){
-    lastJDay <- min(max(jday),lastJDay,eJDay)
-  }
-
 
   today <- max(gd,na.rm=T)
 
   maxGD <- max(c(LTHot,gd),na.rm=T)
   YLIM <- c(0,max(LTGD,na.rm=T))
-  if(Y2DATE == 1){
-    dataSet <- cbind(LTGD,LTHot,LTCold)
-    YLIM <- range(c(LTGD[sJDay:lastJDay],LTHot[sJDay:lastJDay],LTCold[sJDay:lastJDay],gd),na.rm=T)
-  }
 
-  JDays <- sJDay:lastJDay
-  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-  theData <- data.frame(JDays=JDays,date=labs,gd=gd[sJDay:lastJDay],LTGD=LTGD[sJDay:lastJDay],
-                        LTHot=LTHot[sJDay:lastJDay],LTCold=LTCold[sJDay:lastJDay])
+  theData <- data.frame(date=heatDates,gd=gd,LTGD=LTGD,LTHot=LTHot,LTCold=LTCold)
+
+
+
   b <- list(
     title = YLAB,
     titlefont = f1,
@@ -444,10 +561,9 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,Y2DATE,BASETEMP){
 
 
     layout(xaxis=a,yaxis=b,margin=margin,title=stnName) #,plot_bgcolor="rgb(126,126,126)"
-
 }
 
-doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE){
+doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
 
   Year <- as.numeric(YEAR)
 
@@ -464,21 +580,14 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION,Y2DATE){
 
   #curretly this is all calendar year stuff
 
-  tab.1<-getMet(stn,Year)
+  tab.1<-getMet(stn,SDATE,EDATE)
   maxt <- tab.1$maxt
   mint <- tab.1$mint
   jday <- tab.1$day
 
-  if(Y2DATE == 1){
-    eJDay <- min(max(jday),eJDay)
-  }
+
 
   YLIM <- c(min(c(maxt,mint,minTCold,maxTHot),na.rm=T),max(c(maxt,mint,minTCold,maxTHot),na.rm=T))
-  if(Y2DATE == 1){
-    dataset <- cbind(maxTHot,minTCold)
-    YLIM <- range(c(maxt,mint,as.vector(dataset[sJDay:eJDay,])),na.rm=T)
-  }
-
 
   JDays <- sJDay:eJDay
   labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
@@ -521,29 +630,5 @@ getFName <- function(LOCATION,YEAR,CTYPE,GTYPE,TABNAME){
     dataType <- TABNAME
   }
   paste(siteInfo$stnID[as.numeric(LOCATION)],YEAR,dataType,sep='_')
-}
-
-makePDF <- function(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ){
-  pdf(file='myGenerated.pdf',width=12,height=8)
-  doThePlot(YEAR,CHILLTYPE,LOCATION,Y2DATE,HQ)
-  dev.off()
-}
-
-makeJPEG <- function(YEAR,CTYPE,GTYPE,LOCATION,Y2DATE,DATESTART,DATEEND,HEIGHT,TABS,HQ){
-  WIDTH = HEIGHT * 1200 / 800
-  cat(HEIGHT,WIDTH,'\n')
-  jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
-  if(TABS == 'Growing Degrees') {
-    doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,Y2DATE,HQ)
-  }
-  if(TABS == 'Chill'){
-    startJDay <- as.numeric(format(DATESTART,'%j'))
-    doThePlot(YEAR,CTYPE,LOCATION,Y2DATE,DATESTART,HQ)
-  }
-  if(TABS == 'Temperature'){
-    doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION,1,HQ)
-  }
-
-  dev.off()
 }
 
