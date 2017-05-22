@@ -1,4 +1,4 @@
-#server.R
+# server.R
 rm(list=ls())
 library(chillR)
 library(shinysky)
@@ -18,8 +18,6 @@ shinyServer(function(input, output,session) {
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
 
-  #site <- reactiveValues(currentlLoc=startStn,name='Applethorpe')
-
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))
 
   selectedYear <- reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
@@ -33,8 +31,6 @@ shinyServer(function(input, output,session) {
     searchForPlace(input$Town)
   })
 
-
-  #currentFN <- function() { getFName(site$currentLoc,input$yearInput,input$cType,input$gType,input$tabs) }
 
   output$SelectedLocation <- renderUI({
     if(is.null(stns$df[1,1])){
@@ -52,11 +48,6 @@ shinyServer(function(input, output,session) {
     }
   })
 
-  # output$FixTop <- renderUI({
-  #   if( input$tabs == 'Locations' & !is.na(stns$df[2,1]) ){
-  #     checkboxInput("FixTopStn","Keep upper station",F,width='100%')
-  #   }
-  # })
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
@@ -120,9 +111,6 @@ shinyServer(function(input, output,session) {
     }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      # if (is.null(input$yearInput)) {
-      #   return(NULL) #dropbox not ready
-      # }
 
       dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date())),
                 min = paste(selectedYear$Year,"-01-01",sep='')) #,max =  checkDateEnd(as.character(Sys.Date()-1))) #selectedYear$Year
@@ -173,17 +161,11 @@ shinyServer(function(input, output,session) {
     output$GDHPlot <- renderPlotly({
       #print("gType and startDate...")
       if(  is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
-        #print(input$gType)
-        #print(input$startDate)
-        #print(input$endDate)
-        #print(input$baseTemp)
         return(NULL)
       }
       if(is.na(stns$df[1,1])){
         stns$df[1,1] <- startStn
       }
-      #loadTheData(stns$df[1,1])
-      #print('About to run doTheHeatPlot')
       doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$baseTemp) #selectedYear$Year
 
     }) #renderPlot
@@ -382,14 +364,8 @@ shinyServer(function(input, output,session) {
       }
     }
 
-    #print(stns$df)
   })
 
 
 
 })
-
-# aList <- list()
-# for(i in 1:nrow(siteInfo)){
-#   aList[siteInfo$Name[i]] = i
-# }

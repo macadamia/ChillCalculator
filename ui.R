@@ -18,8 +18,6 @@ shinyUI(
 
           fluidRow(
             column(width=3, align = 'left',uiOutput("SelectedLocation")),
-            #column(width=2, align = 'center',uiOutput("FixTop")),
-            #column(width=2, align = 'left',checkboxInput("FixTopStn",h4("Fix Stn"),F)),
             column(width=2, align = 'center',uiOutput("yearOutput")),
             column(width=2, align = 'center',uiOutput("dateStart")),
             column(width=2, align = 'center',uiOutput("dateEnd")),
@@ -35,9 +33,7 @@ shinyUI(
                        column(width=2,
                           selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Yarra Valley" = 3, 'Tas' = 4, 'SA' = 5, 'southern WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
-                              #htmlOutput("NMatches"),
                               uiOutput("BuildStnLocations"),
-                              #selectInput("stnFound",label = h4("Select Station"),choices ="Applethorpe",size=10,selectize=F),
                               textInput("Town", label = h4("Town Starts With..."),value=''),
                               htmlOutput("StationInfo"),
                               uiOutput("NTowns")
@@ -56,10 +52,7 @@ shinyUI(
               fluidRow(
                 column(width=2,
                        radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
-                )#,
-                # column(width=3,
-                #        radioButtons("Y2DateChill", label = h4("Year To Date"),choices = list("Yes" = 1, "No" = 2),selected = 1)
-                #)
+                )
               ),#fluidRow
               fluidRow(
                 plotlyOutput("chillPlot")
@@ -73,9 +66,6 @@ shinyUI(
           tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),
               fluidPage(
                 fluidRow(
-                  # column(width=2,
-                  #        radioButtons("Y2DateGDH", label = h4("Year To Date"), choices = list("Yes" = 1, "No" = 2),selected = 1)
-                  # ),
                    column(width=3,
                           radioButtons("gType", label = h4("Growing Degree"), choices = list("Hours" = 1, "Days" = 2),inline = T,selected = 2)
                   )

@@ -182,7 +182,7 @@ getLTCold <- function(tab.LT,sJDay,eJDay, lat, CHILLTYPE){
 
 }
 
-getLTGDH<-function(stn,startDate,endDate,metOnly){ #long-term data for GDH
+getLTGDH<-function(stn,lat,startDate,endDate,metOnly){ #long-term data for GDH
   sJDay <- as.numeric(format(startDate,'%j'))
   sYear <- as.numeric(format(startDate,'%Y'))
 
@@ -246,13 +246,6 @@ getLTGDH<-function(stn,startDate,endDate,metOnly){ #long-term data for GDH
   }
 }
 
-# for(i in 1:length(ltYears)){
-#   yr <- ltYears[i]
-#   thisStart <- as.Date(paste(yr,sJDay,sep='-'),'%Y-%j')
-#   thisEnd <- as.Date(paste(yr+nYrs,eJDay,sep='-'),'%Y-%j')
-#   #print(length(seq.Date(thisStart,thisEnd,'days')))
-# }
-
 
 calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
   year <- tab.1[,1]
@@ -290,6 +283,7 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
 }
 
 calcHeat <- function(tab.met,lat,sJDay){
+  #cat('just arrived calcHeat lat',lat,'\n')
   year <- tab.met[,1]
   day <- tab.met[ ,2]
   maxt <- tab.met[,4]
@@ -297,6 +291,7 @@ calcHeat <- function(tab.met,lat,sJDay){
 
   chillWeather<-data.frame(year,day,maxt,mint)
   colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
+  #cat('calcHeat lat',lat,'\n')
   THourly<-make_hourly_temps(lat,chillWeather)
   stack<-stack_hourly_temps(hour_file=THourly)
   #get chill and heating info
@@ -307,7 +302,7 @@ calcHeat <- function(tab.met,lat,sJDay){
   these<-1:length(ch$JDay)
 
   maxHeat<-round(max(gdh),1)
-
+  #cat('leaving calcHeat lat',lat,'\n')
   return(list(gdh=gdh,units=units,maxHeat=maxHeat,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
@@ -470,16 +465,11 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   stn<-siteInfo$stnID[LOCATION]
   lat<-siteInfo$latitude[LOCATION]
   stnName<-siteInfo$Name[LOCATION]
-  ##cat(Year,sYear,eYear,'\n')
-  #if(sYear == eYear){ # just one year so grab the ready-made data
-  #print("Loading std data")
-  # rdata <- file.path('Data',paste(stn,'.RData',sep=''))
-  # load(rdata)
-  #}
-  #cat('Latitude',lat,'\n')
+
   tab.1 <- getMet(stn,SDATE,EDATE)
   if(!any(is.na(tab.1))){
     if(GTYPE == 1) {
+      #cat('Latitude',lat,'\n')
       res <- calcHeat(tab.1,lat,sJDay)
       gdh <- res$gdh
       YLAB <- res$units
@@ -509,7 +499,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   if(GTYPE == 2){
     #print('this is the long term met data only')
     metOnly <- T
-    tab.LT <- getLTGDH(stn,SDATE,EDATE,metOnly) # this is the long term met data only
+    tab.LT <- getLTGDH(stn,lat,SDATE,EDATE,metOnly) # this is the long term met data only
     #GDD
     gdd <- (tab.LT[,4] + tab.LT[,5])/2 - as.numeric(BASETEMP)
     gdd[gdd < 0] <- 0
@@ -527,7 +517,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   if(GTYPE == 1){ #} & sYear != eYear){ # recalculate the GDH
     #print("recalculate the GDH")
     metOnly <- F
-    newLT <- getLTGDH(stn,SDATE,EDATE,metOnly) # get the long term GDH data for this range of days
+    newLT <- getLTGDH(stn,lat,SDATE,EDATE,metOnly) # get the long term GDH data for this range of days
     GDH <- colMeans(newLT)
     GDHHot <- apply(newLT,2,quantile,probs=0.9,na.rm=T)
     GDHCold <- apply(newLT,2,quantile,probs=0.1,na.rm=T)
@@ -549,20 +539,6 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
 
   maxGD <- max(c(LTHot,gd),na.rm=T)
   YLIM <- c(0,max(LTGD,na.rm=T))
-
-  ##########  Needs Work ####################
-
-  # LTGD <- cumsum(LTGD[heatJDays])
-  # LTHot <- cumsum(LTHot[heatJDays])
-  # LTCold <- cumsum(LTCold[heatJDays])
-
-  # if(length(jday) < length(heatJDays)){
-  #   these <- which(jday %in% heatJDays)
-  #   heatDates <- heatDates[these]
-  #   LTGD <- LTGD[these]
-  #   LTHot <- LTHot[these]
-  #   LTCold <- LTCold[these]
-  # }
 
   theData <- data.frame(date=heatDates,gd=gd,LTGD=LTGD,LTHot=LTHot,LTCold=LTCold)
 
@@ -655,28 +631,4 @@ getFName <- function(LOCATION,YEAR,CTYPE,GTYPE,TABNAME){
   }
   paste(siteInfo$stnID[as.numeric(LOCATION)],YEAR,dataType,sep='_')
 }
-
-# makePDF <- function(YEAR,CHILLTYPE,LOCATION,HQ){
-#   pdf(file='myGenerated.pdf',width=12,height=8)
-#   doThePlot(YEAR,CHILLTYPE,LOCATION,HQ)
-#   dev.off()
-# }
-#
-# makeJPEG <- function(YEAR,CTYPE,GTYPE,LOCATION,DATESTART,DATEEND,HEIGHT,TABS,HQ){
-#   WIDTH = HEIGHT * 1200 / 800
-#   #cat(HEIGHT,WIDTH,'\n')
-#   jpeg(file='myGenerated.jpg',width=WIDTH,height=HEIGHT,quality=100)
-#   if(TABS == 'Growing Degrees') {
-#     doTheHeatPlot(YEAR,GTYPE,DATESTART,LOCATION,HQ)
-#   }
-#   if(TABS == 'Chill'){
-#     startJDay <- as.numeric(format(DATESTART,'%j'))
-#     doThePlot(YEAR,CTYPE,LOCATION,DATESTART,HQ)
-#   }
-#   if(TABS == 'Temperature'){
-#     doTheTempPlot(YEAR,DATESTART,DATEEND,LOCATION,1,HQ)
-#   }
-#
-#   dev.off()
-# }
 
