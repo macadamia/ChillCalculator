@@ -31,7 +31,7 @@ shinyUI(
                    fluidPage(
                      fluidRow(
                        column(width=2,
-                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Yarra Valley" = 3, 'Tas' = 4, 'SA' = 5, 'southern WA' = 6), selected = 1),
+                          selectInput("Region", label = h4("Select Region"),choices = list("Granite Belt" = 1, "NSW" = 2, "Victoria" = 3, 'Tasmania' = 4, 'SA' = 5, 'southern WA' = 6), selected = 1),
                               textInput("Location", label = h4("Search For Station"),value=''),
                               uiOutput("BuildStnLocations"),
                               textInput("Town", label = h4("Town Starts With..."),value=''),
