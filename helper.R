@@ -1,6 +1,10 @@
 siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
 THEURL <- readRDS('Data/extraInfo.rds')
+TheAPIKey <- readRDS('Data/WillyWeather.rds')
+
+WillyWeatherIDs <- readRDS('Data/WillyWeatherInfo.rds')
+
 
 useAPSIM <- T
 
@@ -141,6 +145,12 @@ getMet<-function(stn,startDate,endDate){
     }
   }
 
+}
+
+getWillyWeather(stn){
+  # change BoM stn number into WillyWeather id
+
+  fcast <- getURL('https://api.willyweather.com.au/v2/',TheAPIKey,'/locations/',id,'/weather.json?forecasts=temperature&days=7')
 }
 
 getLTCold <- function(tab.LT,sJDay,eJDay, lat, CHILLTYPE){
