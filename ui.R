@@ -22,6 +22,7 @@ shinyUI(
             column(width=2, align = 'center',uiOutput("dateStart")),
             column(width=2, align = 'center',uiOutput("dateEnd")),
             column(width=3, align = 'center',uiOutput("baseTemp"))
+            #column(width=2, align = 'center',uiOutput("createPlots"))
           ),
           tabsetPanel(id='tabs',
           tabPanel("How To Use This Site",
