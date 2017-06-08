@@ -165,9 +165,7 @@ shinyServer(function(input, output) {
       if(is.na(stns$df[2,1])){
         return(NULL)
       }
-      #loadTheData(stns$df[2,1]) # stns$df[1,1] as the location
-      startJDay <- as.numeric(format(input$startDate,'%j'))
-      doThePlot(selectedYear$Year,input$cType,stns$df[2,1],input$startDate,input$endDate)
+      doThePlot(input$cType,stns$df[2,1],input$startDate,input$endDate)
     }) #renderPlot
   #})#observe
 

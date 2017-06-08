@@ -230,14 +230,7 @@ getMetHeat<-function(stn,startDate,endDate){
       print(theurl)
     t.p<-try(hdr <- readLines(conn, 20, FALSE))
     if(!inherits(t.p, "try-error")){
-      tab.2 <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
-      if(fileFound & !goodToGo) {
-        cat('Updating tab1 with tab2',nrow(tab.1),nrow(tab.2),'\n')
-        tab.1 <- rbind(tab.1,tab.2)
-      } else {
-        tab.1 <- tab.2
-      }
-      result <- tab.1
+      result <- read.table(conn,header=F,skip=20,col.names=unlist(strsplit(hdr[19], " +")))
     } else {
       result <- NULL
     }
@@ -255,13 +248,7 @@ getMetHeat<-function(stn,startDate,endDate){
       hdr <- strsplit(info[22],' +')[[1]]
       data <-info[24:length(info)]
 
-      tab.2 <- read.table(textConnection(data))
-      if(fileFound & !goodToGo) {
-        tab.1 <- rbind(tab.1,tab.2)
-      } else {
-        tab.1 <- tab.2
-      }
-      result <- tab.1
+      result <- read.table(textConnection(data))
     }
   }
   return(result)
