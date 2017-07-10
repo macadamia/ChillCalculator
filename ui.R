@@ -10,21 +10,26 @@ library(leaflet)
 
 shinyUI(
 
-  fluidPage(
+  fluidPage(theme = "assets/v3/css/qg-main.css",
 
     tags$head(includeScript("google_analytics.js")),
 
     titlePanel(""),
+      fluidRow(column(width=12,align='center',uiOutput()
 
-          fluidRow(
-            column(width=3, align = 'left',uiOutput("SelectedLocation")),
-            column(width=2, align = 'center',uiOutput("yearOutput")),
-            column(width=2, align = 'center',uiOutput("dateStart")),
-            column(width=2, align = 'center',uiOutput("dateEnd")),
-            column(width=3, align = 'center',uiOutput("baseTemp"))
-            #column(width=2, align = 'center',uiOutput("createPlots"))
-          ),
+      ),
+        fluidRow(
+          column(width=3, align = 'left',uiOutput("SelectedLocation")),
+          column(width=2, align = 'center',uiOutput("yearOutput")),
+          column(width=2, align = 'center',uiOutput("dateStart")),
+          column(width=2, align = 'center',uiOutput("dateEnd")),
+          column(width=3, align = 'center',uiOutput("baseTemp"))
+          #column(width=2, align = 'center',uiOutput("createPlots"))
+        ),
           tabsetPanel(id='tabs',
+          tabPanel("Introduction",
+                   includeHTML('Introduction.html')
+          ),
           tabPanel("How To Use This Site",
             includeHTML('HowToUse.html')
           ),
