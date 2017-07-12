@@ -30,6 +30,22 @@ shinyServer(function(input, output) {
     searchForPlace(input$Town)
   })
 
+  output$QldLogos <- renderUI({
+    HTML(
+      '<a href="//www.qld.gov.au" >
+        <img src="assets/v3/images/coat-of-arms/qg-coa.svg" alt="Queensland Government" class="hidden-xs hidden-sm">
+        <img src="assets/v3/images/coat-of-arms/qg-coa-stacked.svg" alt="Queensland Government" class="hidden-md hidden-lg">
+        </a>'
+    )
+  })
+
+  output$HIALogos <- renderUI({
+    HTML(
+      '<a href="//www.horticulture.com.au" >
+      <img src="HortInovation-rgb-web.jpg" alt="Horticulture Innovation Australia" class="hidden-xs hidden-sm">
+      </a>'
+    )
+  })
 
   output$SelectedLocation <- renderUI({
     if(is.null(stns$df[1,1])){

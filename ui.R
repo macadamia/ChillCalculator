@@ -15,8 +15,9 @@ shinyUI(
     tags$head(includeScript("google_analytics.js")),
 
     titlePanel(""),
-      fluidRow(column(width=12,align='center',uiOutput()
-
+      fluidRow(
+        column(width=6,align='left',uiOutput("QldLogos")),
+        column(width=6,align='right',uiOutput("HIALogos"))
       ),
         fluidRow(
           column(width=3, align = 'left',uiOutput("SelectedLocation")),
