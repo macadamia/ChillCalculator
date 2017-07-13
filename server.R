@@ -30,14 +30,32 @@ shinyServer(function(input, output) {
     searchForPlace(input$Town)
   })
 
+  output$Logos <- renderUI(
+    HTML(
+        '<style>
+          table#t01 {
+          width: 100%;
+          }
+        </style>
+        <table id="t01">
+          <td>
+            <a href="//www.daf.qld.gov.au"> <img src="qg_logo_mar.png">  </a>
+          </td>
+          <td style="float:right;">
+            <a href="//www.horticulture.com.au"> <img src="HortInnovation-rgb-web.jpg">  </a>
+          </td>
+        </table>'
+    )
+  )
 
-  # output$HIALogos <- renderUI({
-  #   HTML(
-  #     '<a href="//www.horticulture.com.au" >
-  #     <img src="HortInovation-rgb-web.jpg" alt="Horticulture Innovation Australia" class="hidden-xs hidden-sm">
-  #     </a>'
-  #   )
-  # })
+  output$Share <- renderUI(
+    HTML(
+      '<a href="https://twitter.com/share" class="twitter-share-button" data-size="large" data-show-count="false">Tweet</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+      <iframe src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fhort-science.shinyapps.io%2FChillCalculator%2F&layout=button_count&size=large&mobile_iframe=true&width=84&height=28&appId" width="84" height="28" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true"></iframe>'
+    )
+  )
+
+
 
   output$SelectedLocation <- renderUI({
     if(is.null(stns$df[1,1])){
@@ -134,14 +152,6 @@ shinyServer(function(input, output) {
       textInput('baseTemp',h4("Base Temperature (ºC)"),"10",'300px')
     }
   })
-
-  # output$createPlots <- renderUI({
-  #
-  #   if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-  #     actionButton('TriggerButton','Update',icon=icon('refresh'))
-  #   }
-  #
-  # })
 
 
   ### Chill Plot ###
@@ -317,6 +327,8 @@ shinyServer(function(input, output) {
         })
       }
     }
+    if(debug)
+      cat('About to run leaflet\n')
     leaflet(data = siteInfo) %>%
       addTiles() %>%
       addMarkers(~longitude,~latitude, layerId = ~stnID, popup = ~NamePerc) %>%

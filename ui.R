@@ -6,7 +6,8 @@ library(plotly)
 library(shinysky)
 library(leaflet)
 
-#
+# arm online #4E7707
+#franchise blue #007EB1
 
 shinyUI(
 
@@ -14,6 +15,11 @@ shinyUI(
 
     includeCSS( "www/assets/v3/css/qg-main.css"),
     tags$head(includeScript("google_analytics.js"),
+    tags$head(tags$style('.headerRow{background-color: #4E7707;}')),
+
+    tags$div(id="fb-root"),
+    #includeHTML('www/fb.html'),
+
       #tags$meta(http-equiv="Content-Type", content="text/html; charset=utf-8"),
       tags$meta(name="description", content="calculates the chill and heating degrees for plant growth"),
       tags$meta(name="keywords", content="chill, chill portions, chilling units, chill hours, growing degree days, growing degree hours, temperature, Australia, fruit, nut, trees "),
@@ -42,31 +48,30 @@ shinyUI(
 
       tags$link(rel="shortcut icon", href="www/assets/v3/images/favicon.ico"),
 
+      tags$script("https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"),
+
       tags$link(href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic", rel="stylesheet", type="text/css"),
-
-
       tags$noscript(
         tags$link(href="www/assets/v3/css/qg-noscript.css", rel="stylesheet", type="text/css", media="all")
       ),
-
-      includeScript("https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"),
-      includeScript("www/assets/v3/lib/ext/butterfly/jquery.resize-events.js"),
-      includeScript("www/assets/v3/lib/ext/butterfly/jquery.history.js"),
-      includeScript("www/assets/v3/lib/ext/butterfly/jquery.butterfly.js"),
-      includeScript("www/assets/v3/js/qg-main.js")
-      ),
-
-    fluidRow(
-      column(width=6, align = 'left',tags$td(tags$a(href="//www.qld.gov.au", tags$img(src="qg_logo_mar.png")))),
-      column(width=6, align = 'right',tags$a(href="//www.horticulture.com.au", tags$img(src="//horticulture.com.au/wp-content/uploads/2017/06/HortInnovation-rgb-web.jpg")))
+      tags$link(href="www/assets/v3/css/qg-documentation.css", rel="stylesheet", type="text/css", media="all"),
+      tags$script("https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"),
+      tags$script("www/assets/v3/lib/ext/butterfly/jquery.resize-events.js"),
+      tags$script("www/assets/v3/lib/ext/butterfly/jquery.history.js"),
+      tags$script("www/assets/v3/lib/ext/butterfly/jquery.butterfly.js"),
+      tags$script("www/assets/v3/js/qg-main.js")
     ),
 
     fluidRow(
-      column(width=3, align = 'left',uiOutput("SelectedLocation")),
-      column(width=2, align = 'center',uiOutput("yearOutput")),
-      column(width=2, align = 'center',uiOutput("dateStart")),
-      column(width=2, align = 'center',uiOutput("dateEnd")),
-      column(width=3, align = 'center',uiOutput("baseTemp"))
+      column(width=12,uiOutput("Logos"))
+    ),
+
+    fluidRow(class = 'headerRow',
+        column(width=3, align = 'left', uiOutput("SelectedLocation")),
+        column(width=2, align = 'center',uiOutput("yearOutput")),
+        column(width=2, align = 'center',uiOutput("dateStart")),
+        column(width=2, align = 'center',uiOutput("dateEnd")),
+        column(width=3, align = 'center',uiOutput("baseTemp"))
     ),
       tabsetPanel(id='tabs',
       tabPanel("Introduction",
@@ -98,8 +103,8 @@ shinyUI(
     tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
       fluidPage(
         fluidRow(
-          column(width=2,
-                 radioButtons("cType", label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
+          column(width=6,
+                 radioButtons("cType", inline = T, label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
           )
         ),#fluidRow
         fluidRow(
@@ -165,6 +170,15 @@ shinyUI(
              HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>"),
              helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2017.")
       )
-    ) #tabset
+    ), #tabset
+  fluidRow(class = 'headerRow',
+    column(width=12,uiOutput("Share"))
+  )
   )#fluidPage
 )#shinyUI
+
+
+
+
+
+
