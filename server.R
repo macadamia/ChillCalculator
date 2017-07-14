@@ -4,6 +4,7 @@ library(chillR)
 library(shinysky)
 library(leaflet)
 library(plotly)
+library(rdrop2)
 
 source('helper.R')
 
@@ -76,7 +77,7 @@ shinyServer(function(input, output) {
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), currentYear)
+      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year) #currentYear
     }
   })
 

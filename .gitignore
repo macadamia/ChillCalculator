@@ -4,3 +4,4 @@
 *.dcf
 /Data/*
 .Rproj.user
+.httr-oauth

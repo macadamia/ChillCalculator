@@ -5,6 +5,9 @@ TheAPIKey <- readRDS('Data/WillyWeather.rds')
 
 #WillyWeatherIDs <- readRDS('Data/WillyWeatherInfo.rds')
 
+#Dropbox
+token <- readRDS('Data/droptokenchillcalc.rds')
+drop_acc(dtoken=token)
 
 useAPSIM <- T
 
@@ -13,6 +16,21 @@ debug <- F
 if(!useAPSIM){
   longPaddock <- readRDS('Data/LongPaddock.rds')
   library(RCurl)
+}
+
+checkRData <- function(fname){
+  #is it local already
+  if(file.exists(fname)){
+    if(debug)
+      cat('Found',fname,'in local file system\n')
+    return(T)
+  } else {
+    dname <- unlist(strsplit(fname,'Data/'))[2]
+    test <- drop_get(paste('ChillCalcStore',dname,sep='/'),overwrite=T,local_file = fname)
+    if(debug)
+      cat('Found',fname,'on Dropbox/ChillCalcStore\n')
+    return(test)
+  }
 }
 
 gaz$PlaceName <- as.character(gaz$PlaceName)
@@ -120,11 +138,20 @@ getMet<-function(stn,startDate,endDate){
   }
   goodToGo <- F
   fileFound <- F
-  if(file.exists(fName)){
+
+  if(debug)
+    cat('Looking for',fName,'\n')
+
+  fileFound <- checkRData(fName) #checks if stored this session then tries dropbox
+
+  if(!fileFound & debug){
+    cat('Local and Dropbox did not have',fName)
+  }
+
+  if(fileFound){  # this is session and dropbox test
     if(debug){
       cat('Found',fName,'\n')
     }
-    fileFound <- T
     load(fName)
     #does it include the end date?
     nDays <- nrow(tab.1)
@@ -143,6 +170,8 @@ getMet<-function(stn,startDate,endDate){
     }
   }
   if(!fileFound | (fileFound & !goodToGo)){
+    if(debug)
+      cat('Geting from net\n')
     if(useAPSIM){
       if(debug)
         print('APSIM')
@@ -203,7 +232,10 @@ getMet<-function(stn,startDate,endDate){
         result <- tab.1
       }
     }
-    save(tab.1,file=fName)
+    save(tab.1,file=fName) # per session
+    #store to dropbox
+    drop_upload(fName,dest='ChillCalcStore')
+    cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)
 
