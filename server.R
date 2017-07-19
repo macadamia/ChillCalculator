@@ -12,7 +12,11 @@ source('helper.R')
 startStn <- which(siteInfo$Name == 'Applethorpe')
 startTown <- which(gaz$PlaceName == 'Applethorpe')
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+
+  # observeEvent(input$link_to_chill, {
+  #   updateTabsetPanel(session, "tabs", "Chill")
+  # })
 
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))

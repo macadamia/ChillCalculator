@@ -16,9 +16,7 @@ shinyUI(
     includeCSS( "www/assets/v3/css/qg-main.css"),
     tags$head(includeScript("google_analytics.js"),
     tags$head(tags$style('.headerRow{background-color: #4E7707;}')),
-
     tags$div(id="fb-root"),
-    #includeHTML('www/fb.html'),
 
       #tags$meta(http-equiv="Content-Type", content="text/html; charset=utf-8"),
       tags$meta(name="description", content="calculates the chill and heating degrees for plant growth"),
