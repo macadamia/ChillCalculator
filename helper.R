@@ -579,15 +579,15 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
 
     #cat('do the plot\n')
     if(CHILLTYPE != 3){
-      p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+      p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Lowest 10%',
                    line=list(color='transparent'),showlegend = F) %>%
-      add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+      add_trace(y = ~LTCold,name='Highest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
       add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
       layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
     } else {
-      plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+      plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Lowest 10%',
                    line=list(color='transparent'),showlegend = F)  %>%
-      add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+      add_trace(y = ~LTCold,name='Highest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
       add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
       layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
     }
@@ -716,10 +716,10 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
     tickfont = f1
   )
 
-  p <- plot_ly(theData, x = ~date, y = ~LTHot,  type = "scatter", mode='lines',name='Warmest 10%',
+  p <- plot_ly(theData, x = ~date, y = ~LTHot,  type = "scatter", mode='lines',name='Highest 10%',
                line=list(color='transparent'),showlegend = F) %>%
 
-    add_trace(y = ~LTCold,name='Coolest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
+    add_trace(y = ~LTCold,name='Lowest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
 
     add_trace(y = ~gd,name='This Year',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
 
@@ -770,15 +770,15 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
     tickangle = 0,
     tickfont = f1
   )
-  p <- plot_ly(theData, x = ~date, y = ~maxThi,  type = "scatter", mode='lines',name='Top 10% Max T',
+  p <- plot_ly(theData, x = ~date, y = ~maxThi,  type = "scatter", mode='lines',name='Highest 10%',
                line=list(color='transparent'),showlegend = F) %>%
 
-    add_trace(y = ~maxTlo,name='Low 10% Max T',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
+    add_trace(y = ~maxTlo,name='Lowest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
 
     add_trace(y = ~maxt,name='Max T',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
 
-    add_trace(y = ~minThi,name='Top 10% Min T',showlegend = F,line=list(color='transparent')) %>%
-    add_trace(y = ~minTlo,name='Low 10% Min T',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
+    add_trace(y = ~minThi,name='Highest 10%',showlegend = F,line=list(color='transparent')) %>%
+    add_trace(y = ~minTlo,name='Lowest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
 
     add_trace(y = ~mint,name='Min T',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
 

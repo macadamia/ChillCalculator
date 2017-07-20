@@ -63,6 +63,9 @@ shinyUI(
     fluidRow(
       column(width=12,uiOutput("Logos"))
     ),
+    fluidRow(class = 'headerRow',
+             column(width=12,uiOutput("Share"))
+    ),
 
     fluidRow(class = 'headerRow',
         column(width=3, align = 'left', uiOutput("SelectedLocation")),
@@ -168,10 +171,8 @@ shinyUI(
              HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>"),
              helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2017.")
       )
-    ), #tabset
-  fluidRow(class = 'headerRow',
-    column(width=12,uiOutput("Share"))
-  )
+    ) #tabset
+
   )#fluidPage
 )#shinyUI
 
