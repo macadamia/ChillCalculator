@@ -95,10 +95,10 @@ shinyServer(function(input, output, session) {
 
   checkDateEnd <- function(aDate){  # this function is not quite right
     aYear <- as.numeric(input$yearInput)
-    thisYear <- as.numeric(format(Sys.Date(),'%Y'))
+    thisYear <- as.numeric(format(Sys.Date(),tz='Australia/Brisbane','%Y'))
     if(aYear == thisYear){
       nDaysToSubstract <- 1
-      if(as.numeric(format(Sys.time(),'%H')) < 12){ # silo probably not updated
+      if(as.numeric(format(Sys.time(),tz='Australia/Brisbane','%H')) < 12){ # silo probably not updated
         nDaysToSubstract <- 2
       }
       return(Sys.Date() - nDaysToSubstract)

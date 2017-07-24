@@ -7,7 +7,7 @@ TheAPIKey <- readRDS('Data/WillyWeather.rds')
 
 #Dropbox
 token <- readRDS('Data/droptokenchillcalc.rds')
-drop_acc(dtoken=token)
+#drop_acc(dtoken=token)
 
 useAPSIM <- T
 
@@ -26,7 +26,7 @@ checkRData <- function(fname){
     return(T)
   } else {
     dname <- unlist(strsplit(fname,'Data/'))[2]
-    test <- drop_get(paste('ChillCalcStore',dname,sep='/'),overwrite=T,local_file = fname)
+    test <- drop_get(paste('ChillCalcStore',dname,sep='/'),overwrite=T,local_file = fname,dtoken=token)
     if(debug)
       cat('Found',fname,'on Dropbox/ChillCalcStore\n')
     return(test)
@@ -234,7 +234,7 @@ getMet<-function(stn,startDate,endDate){
     }
     save(tab.1,file=fName) # per session
     #store to dropbox
-    drop_upload(fName,dest='ChillCalcStore')
+    drop_upload(fName,dest='ChillCalcStore',dtoken=token)
     cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)
