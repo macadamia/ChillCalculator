@@ -99,7 +99,7 @@ shinyServer(function(input, output, session) {
     if(aYear == thisYear){
       nDaysToSubstract <- 1
       if(as.numeric(format(Sys.time(),tz='Australia/Brisbane','%H')) < 12){ # silo probably not updated
-        nDaysToSubstract <- 2
+        nDaysToSubstract <- 1
       }
       return(Sys.Date() - nDaysToSubstract)
     } else {
