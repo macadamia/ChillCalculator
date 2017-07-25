@@ -168,6 +168,8 @@ getMet<-function(stn,startDate,endDate){
     } else {
       goodToGo <- F
     }
+    if(debug)
+      cat('We are good to go?',goodToGo,'\n')
   }
   if(!fileFound | (fileFound & !goodToGo)){
     if(debug)
