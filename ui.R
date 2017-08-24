@@ -170,7 +170,10 @@ shinyUI(
              helpText("For Technical issues: "),
              HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>"),
              helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2017.")
-      )
+      ),
+  tabPanel("News",
+           includeHTML('News.html')
+  )
     ) #tabset
 
   )#fluidPage

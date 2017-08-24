@@ -11,7 +11,7 @@ token <- readRDS('Data/droptokenchillcalc.rds')
 
 useAPSIM <- T
 
-debug <- F
+debug <- T
 
 if(!useAPSIM){
   longPaddock <- readRDS('Data/LongPaddock.rds')
@@ -750,6 +750,11 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
   #curretly this is all calendar year stuff
 
   tab.1<-getMet(stn,SDATE,EDATE)
+  JDays <- sJDay:eJDay
+  if(nrow(tab.1) < length(JDays) ){
+    #SILO not up to date
+    JDays <- JDays[1:nrows(tab.1)]
+  }
   if(debug)
     cat('returned data has',nrow(tab.1),'from day',sJDay,'to',eJDay,'Total Days:',eJDay - sJDay + 1,'\n')
   maxt <- tab.1$maxt
@@ -758,7 +763,6 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
 
   YLIM <- c(min(c(maxt,mint,minTCold,maxTHot),na.rm=T),max(c(maxt,mint,minTCold,maxTHot),na.rm=T))
 
-  JDays <- sJDay:eJDay
   labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
   theData <- data.frame(date=labs,maxt=maxt,mint=mint,
                         maxTlo=maxTCold[JDays],maxThi=maxTHot[JDays],
