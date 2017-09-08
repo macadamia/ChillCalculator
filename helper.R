@@ -753,7 +753,7 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
   JDays <- sJDay:eJDay
   if(nrow(tab.1) < length(JDays) ){
     #SILO not up to date
-    JDays <- JDays[1:nrows(tab.1)]
+    JDays <- JDays[1:nrow(tab.1)]
   }
   if(debug)
     cat('returned data has',nrow(tab.1),'from day',sJDay,'to',eJDay,'Total Days:',eJDay - sJDay + 1,'\n')
