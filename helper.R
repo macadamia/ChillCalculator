@@ -26,9 +26,15 @@ checkRData <- function(fname){
     return(T)
   } else {
     dname <- unlist(strsplit(fname,'Data/'))[2]
-    test <- drop_get(paste('ChillCalcStore',dname,sep='/'),overwrite=T,local_file = fname,dtoken=token)
+    dropboxFile <- paste('ChillCalcStore',dname,sep='/')
     if(debug)
-      cat('Found',fname,'on Dropbox/ChillCalcStore\n')
+      cat('Checking for', dropboxFile,'\n')
+    test <- F
+    if(drop_exists(path = dropboxFile, dtoken = token)){
+      test <- drop_download(path = dropboxFile ,local_path = fname,overwrite = T, dtoken = token, verbose = F)
+      if(debug)
+        cat('Found',fname,'on Dropbox/ChillCalcStore\n')
+    }
     return(test)
   }
 }
@@ -141,7 +147,8 @@ getMet<-function(stn,startDate,endDate){
 
   if(debug)
     cat('Looking for',fName,'\n')
-
+  if(debug)
+    cat('Check on Dropbox\n')
   fileFound <- checkRData(fName) #checks if stored this session then tries dropbox
 
   if(!fileFound & debug){
@@ -171,6 +178,8 @@ getMet<-function(stn,startDate,endDate){
     if(debug)
       cat('We are good to go?',goodToGo,'\n')
   }
+  if(debug)
+    cat('fileFound',fileFound,'goodToGo',goodToGo,'\n')
   if(!fileFound | (fileFound & !goodToGo)){
     if(debug)
       cat('Geting from net\n')
@@ -236,7 +245,7 @@ getMet<-function(stn,startDate,endDate){
     }
     save(tab.1,file=fName) # per session
     #store to dropbox
-    drop_upload(fName,dest='ChillCalcStore',dtoken=token)
+    drop_upload(fName, path = 'ChillCalcStore', dtoken = token, verbose = T)
     cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)

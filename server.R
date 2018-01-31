@@ -8,15 +8,29 @@ library(rdrop2)
 
 source('helper.R')
 
-
-startStn <- which(siteInfo$Name == 'Applethorpe')
-startTown <- which(gaz$PlaceName == 'Applethorpe')
+# startStn <- which(siteInfo$Name == 'Applethorpe')
+# startTown <- which(gaz$PlaceName == 'Applethorpe')
 
 shinyServer(function(input, output, session) {
 
   # observeEvent(input$link_to_chill, {
   #   updateTabsetPanel(session, "tabs", "Chill")
   # })
+  observe({
+    js$getcookie()
+    if(debug)
+      print(input$jscookie)
+    if (!is.null(input$jscookie) & input$jscookie != '') {
+      if(debug)
+        cat("Found cookie", input$jscookie,length(input$jscookie), '\n')
+      startStn <- which(siteInfo$Name ==  siteInfo[as.numeric(input$jscookie)])
+      startTown <- which(gaz$PlaceName ==  siteInfo[as.numeric(input$jscookie)])
+    } else {
+      print("No cookie")
+      startStn <- which(siteInfo$Name == 'Applethorpe')
+      startTown <- which(gaz$PlaceName == 'Applethorpe')
+    }
+  })
 
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
@@ -98,9 +112,11 @@ shinyServer(function(input, output, session) {
     thisYear <- as.numeric(format(Sys.Date(),tz='Australia/Brisbane','%Y'))
     if(aYear == thisYear){
       nDaysToSubstract <- 1
+      options(warn=-1) # to ignore tz warning
       if(as.numeric(format(Sys.time(),tz='Australia/Brisbane','%H')) < 12){ # silo probably not updated
         nDaysToSubstract <- 1
       }
+      options(warn=0)
       return(Sys.Date() - nDaysToSubstract)
     } else {
       return(paste(aYear,'-12-31',sep=''))
@@ -408,6 +424,14 @@ shinyServer(function(input, output, session) {
         #print("Two the same")
         stns$df <- stns$df[1,]
       }
+    }
+    if(input$KeepLocation){
+      if(debug)
+        print("store Cookie")
+      js$setcookie(rowNumber)
+      js$getcookie()
+      if(debug)
+        print(input$jscookie)
     }
 
   })

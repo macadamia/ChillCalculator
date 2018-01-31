@@ -5,15 +5,43 @@ library(chillR)
 library(plotly)
 library(shinysky)
 library(leaflet)
+library(shinyjs)
 
 # arm online #4E7707
 #franchise blue #007EB1
+
+# for user location
+jsCode <- '
+shinyjs.getcookie = function(params) {
+var cookie = Cookies.get("userLocation");
+if (typeof cookie !== "undefined") {
+Shiny.onInputChange("jscookie", cookie);
+} else {
+var cookie = "";
+Shiny.onInputChange("jscookie", cookie);
+}
+}
+shinyjs.setcookie = function(params) {
+console.info(params)
+Cookies.set("userLocation", escape(params), { expires: 3650 });
+Shiny.onInputChange("jscookie", params);
+}
+shinyjs.rmcookie = function(params) {
+Cookies.remove("userLocation");
+Shiny.onInputChange("jscookie", "");
+}
+'
 
 shinyUI(
 
   fluidPage(
 
     includeCSS( "www/assets/v3/css/qg-main.css"),
+    tags$head(
+      tags$script(src = "js.cookie.js")
+    ),
+    useShinyjs(),
+    extendShinyjs(text = jsCode),
     tags$head(includeScript("google_analytics.js"),
     tags$head(tags$style('.headerRow{background-color: #4E7707;}')),
     tags$div(id="fb-root"),
@@ -44,20 +72,20 @@ shinyUI(
       #tags$meta(http-equiv="X-UA-Compatible", content="IE=edge"),
       tags$meta(name="viewport", content="width=device-width, initial-scale=1"),
 
-      tags$link(rel="shortcut icon", href="www/assets/v3/images/favicon.ico"),
+      tags$link(rel="shortcut icon", href="assets/v3/images/favicon.ico"),
 
       tags$script("https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"),
 
       tags$link(href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic", rel="stylesheet", type="text/css"),
       tags$noscript(
-        tags$link(href="www/assets/v3/css/qg-noscript.css", rel="stylesheet", type="text/css", media="all")
+        tags$link(href="assets/v3/css/qg-noscript.css", rel="stylesheet", type="text/css", media="all")
       ),
-      tags$link(href="www/assets/v3/css/qg-documentation.css", rel="stylesheet", type="text/css", media="all"),
+      tags$link(href="assets/v3/css/qg-documentation.css", rel="stylesheet", type="text/css", media="all"),
       tags$script("https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"),
-      tags$script("www/assets/v3/lib/ext/butterfly/jquery.resize-events.js"),
-      tags$script("www/assets/v3/lib/ext/butterfly/jquery.history.js"),
-      tags$script("www/assets/v3/lib/ext/butterfly/jquery.butterfly.js"),
-      tags$script("www/assets/v3/js/qg-main.js")
+      tags$script("assets/v3/lib/ext/butterfly/jquery.resize-events.js"),
+      tags$script("assets/v3/lib/ext/butterfly/jquery.history.js"),
+      tags$script("assets/v3/lib/ext/butterfly/jquery.butterfly.js"),
+      tags$script("assets/v3/js/qg-main.js")
     ),
 
     fluidRow(
@@ -94,6 +122,9 @@ shinyUI(
              ),
              column(width=2, align = 'left',
               checkboxInput("FixTopStn","Keep upper station",F,width='100%')
+             ),
+             column(width=2, align = 'left',
+                    checkboxInput("KeepLocation","Remember this station",F,width='100%')
              ),
              column(width=9,
                     leafletOutput("map", width='100%',height='600px' )
