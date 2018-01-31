@@ -11,7 +11,7 @@ token <- readRDS('Data/droptokenchillcalc.rds')
 
 useAPSIM <- T
 
-debug <- T
+debug <- F
 
 if(!useAPSIM){
   longPaddock <- readRDS('Data/LongPaddock.rds')
@@ -612,7 +612,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   # YEAR2 <- '2017'
   # GTYPE <- 2
   # SDATE <- as.Date(paste(YEAR,'05-01',sep='-'))
-  # EDATE <- as.Date(paste(YEAR2,'06-07',sep='-'))
+  # EDATE <- as.Date(paste(YEAR2,'09-07',sep='-'))
   # LOCATION <- 317
   # BASETEMP <- '10'
 
@@ -715,7 +715,13 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
   maxGD <- max(c(LTHot,gd),na.rm=T)
   YLIM <- c(0,max(LTGD,na.rm=T))
 
-  theData <- data.frame(date=heatDates,gd=gd,LTGD=LTGD,LTHot=LTHot,LTCold=LTCold)
+  if(debug){
+    cat('heatDates',length(heatDates),'gd',length(gd),'LTGD',length(LTGD),'LTHot',length(LTHot),'LTCold',length(LTCold),'\n')
+  }
+
+  nDatesReturned <- length(gd)
+  theData <- data.frame(date=heatDates[1:nDatesReturned],gd=gd,
+              LTGD=LTGD[1:nDatesReturned],LTHot=LTHot[1:nDatesReturned],LTCold=LTCold[1:nDatesReturned])
 
 
 
