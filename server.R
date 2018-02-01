@@ -8,29 +8,37 @@ library(rdrop2)
 
 source('helper.R')
 
-# startStn <- which(siteInfo$Name == 'Applethorpe')
-# startTown <- which(gaz$PlaceName == 'Applethorpe')
-
 shinyServer(function(input, output, session) {
 
-  # observeEvent(input$link_to_chill, {
-  #   updateTabsetPanel(session, "tabs", "Chill")
-  # })
-  observe({
-    js$getcookie()
+  observe({input$jscookie
     if(debug)
-      print(input$jscookie)
+      print('running getcookie from observe')
+  js$getcookie()
+  if(debug)
+    cat('cookie length',length(input$jscookie),':',input$jscookie,':\n')
+  if(length(input$jscookie) < 1){
+    if(debug)
+      print("No cookie (length 0)")
+    startStn <- which(siteInfo$Name == 'Applethorpe')
+    startTown <- which(gaz$PlaceName == 'Applethorpe')
+  } else {
     if (!is.null(input$jscookie) & input$jscookie != '') {
       if(debug)
         cat("Found cookie", input$jscookie,length(input$jscookie), '\n')
-      startStn <- which(siteInfo$Name ==  siteInfo[as.numeric(input$jscookie)])
-      startTown <- which(gaz$PlaceName ==  siteInfo[as.numeric(input$jscookie)])
+      startStn <- as.numeric(input$jscookie)
+      startTown <- which(gaz$PlaceName ==  siteInfo[as.numeric(input$jscookie),'Name'])
+      #update the label in the
+      stns$df[1,1] <- startStn
+      if(debug)
+        cat('startStn',startStn,'startTown',startTown,'\n')
     } else {
-      print("No cookie")
+      if(debug)
+        print("No cookie")
       startStn <- which(siteInfo$Name == 'Applethorpe')
       startTown <- which(gaz$PlaceName == 'Applethorpe')
     }
-  })
+  }
+})
 
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
@@ -378,6 +386,19 @@ shinyServer(function(input, output, session) {
     proxy %>% setView(lng=rlng, lat=rlat, zoom = 9)
 
   })
+
+  observeEvent(input$recentre, {
+    if (is.null(input$recentre)) {
+      return(NULL)
+    }
+    this <- stns$df$row[1]
+    rlng <- siteInfo$longitude[this]
+    rlat <- siteInfo$latitude[this]
+    cat(startStn,rlat,rlng,'\n')
+    proxy <- leafletProxy("map")
+    proxy %>% setView(lng=rlng, lat=rlat, zoom = 9)
+  })
+
   observeEvent(input$map_marker_click,{
     click<-input$map_marker_click
     if(is.null(click)){
@@ -435,7 +456,4 @@ shinyServer(function(input, output, session) {
     }
 
   })
-
-
-
 })

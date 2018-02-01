@@ -1,36 +1,8 @@
 #Chill Units Calculator
 #ui.R
-library(shiny)
-library(chillR)
-library(plotly)
-library(shinysky)
-library(leaflet)
-library(shinyjs)
 
-# arm online #4E7707
-#franchise blue #007EB1
 
 # for user location
-jsCode <- '
-shinyjs.getcookie = function(params) {
-var cookie = Cookies.get("userLocation");
-if (typeof cookie !== "undefined") {
-Shiny.onInputChange("jscookie", cookie);
-} else {
-var cookie = "";
-Shiny.onInputChange("jscookie", cookie);
-}
-}
-shinyjs.setcookie = function(params) {
-console.info(params)
-Cookies.set("userLocation", escape(params), { expires: 3650 });
-Shiny.onInputChange("jscookie", params);
-}
-shinyjs.rmcookie = function(params) {
-Cookies.remove("userLocation");
-Shiny.onInputChange("jscookie", "");
-}
-'
 
 shinyUI(
 
@@ -41,7 +13,7 @@ shinyUI(
       tags$script(src = "js.cookie.js")
     ),
     useShinyjs(),
-    extendShinyjs(text = jsCode),
+    extendShinyjs('www/myJSCode.js'),
     tags$head(includeScript("google_analytics.js"),
     tags$head(tags$style('.headerRow{background-color: #4E7707;}')),
     tags$div(id="fb-root"),
@@ -124,8 +96,10 @@ shinyUI(
               checkboxInput("FixTopStn","Keep upper station",F,width='100%')
              ),
              column(width=2, align = 'left',
-                    checkboxInput("KeepLocation","Remember this station",F,width='100%')
+                    checkboxInput("KeepLocation","Remember this station",F,width='100%'),
+                    actionButton("recentre","Recentre")
              ),
+
              column(width=9,
                     leafletOutput("map", width='100%',height='600px' )
             )
@@ -208,10 +182,4 @@ shinyUI(
     ) #tabset
 
   )#fluidPage
-)#shinyUI
-
-
-
-
-
-
+)

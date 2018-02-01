@@ -1,22 +1,3 @@
-siteInfo <- readRDS('Data/SiteInfo.rds')
-gaz <- readRDS('Data/Gazetteer2010.rds')
-THEURL <- readRDS('Data/extraInfo.rds')
-TheAPIKey <- readRDS('Data/WillyWeather.rds')
-
-#WillyWeatherIDs <- readRDS('Data/WillyWeatherInfo.rds')
-
-#Dropbox
-token <- readRDS('Data/droptokenchillcalc.rds')
-#drop_acc(dtoken=token)
-
-useAPSIM <- T
-
-debug <- F
-
-if(!useAPSIM){
-  longPaddock <- readRDS('Data/LongPaddock.rds')
-  library(RCurl)
-}
 
 checkRData <- function(fname){
   #is it local already
