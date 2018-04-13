@@ -92,10 +92,10 @@ shinyUI(
                     htmlOutput("StationInfo"),
                     uiOutput("NTowns")
              ),
-             column(width=2, align = 'left',
-              checkboxInput("FixTopStn","Keep upper station",F,width='100%')
-             ),
-             column(width=2, align = 'left',
+             # column(width=2, align = 'left',
+             #  checkboxInput("FixTopStn","Keep upper station",F,width='100%')
+             # ),
+             column(width=4, align = 'left',
                     checkboxInput("KeepLocation","Remember this station",F,width='100%'),
                     actionButton("recentre","Recentre")
              ),
@@ -115,14 +115,15 @@ shinyUI(
         ),#fluidRow
         fluidRow(
           plotlyOutput("chillPlot")
-        ),#fluidRow
-        fluidRow(
-          plotlyOutput("chillPlot2")
         )
+        # ,#fluidRow
+        # fluidRow(
+        #   plotlyOutput("chillPlot2")
+        # )
 
-      )#fluidPage
+      ) #fluidPage
   ),
-    tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In progress",wait = 0),
+    tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In Progress",wait = 0),
         fluidPage(
           fluidRow(
              column(width=3,
@@ -131,19 +132,20 @@ shinyUI(
           ),
           fluidRow(
             plotlyOutput("GDHPlot")
-          ),
-          fluidRow(
-            plotlyOutput("GDHPlot2")
           )
+          # ,
+          # fluidRow(
+          #   plotlyOutput("GDHPlot2")
+          # )
         )#fluidPage
     ),
-    tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In progress",wait = 0),
+    tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In Progress",wait = 0),
              fluidPage(
                fluidRow(
                  plotlyOutput("TempPlot")
                ),
                fluidRow(
-                 plotlyOutput("TempPlot2")
+                 plotlyOutput("RainPlot")
                )
           )
     ),

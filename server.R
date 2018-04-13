@@ -28,7 +28,8 @@ shinyServer(function(input, output, session) {
       startStn <- as.numeric(input$jscookie)
       startTown <- which(gaz$PlaceName ==  siteInfo[as.numeric(input$jscookie),'Name'])
       #update the label in the
-      stns$df[1,1] <- startStn
+      #stns$df[1,1] <- startStn
+      stns <- startStn
       if(debug)
         cat('startStn',startStn,'startTown',startTown,'\n')
     } else {
@@ -41,7 +42,8 @@ shinyServer(function(input, output, session) {
 })
 
   stns <- reactiveValues()
-  stns$df <- data.frame(row=numeric(0),stn=character(0))
+  # stns$df <- data.frame(row=numeric(0),stn=character(0))
+
 
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))# just used to update the Year drop down
 
@@ -84,22 +86,37 @@ shinyServer(function(input, output, session) {
 
 
 
+  # output$SelectedLocation <- renderUI({
+  #   if(is.null(stns$df[1,1])){
+  #     stns$df[1,1] <- startStn
+  #   }
+  #   ## replace the UI with a table or something using stns$df
+  #   if(is.na(siteInfo$Name[stns$df[1,1]])){
+  #     HTML(paste("<br/><h3>Applethorpe</h3>"))
+  #   }
+  # })
+
   output$SelectedLocation <- renderUI({
-    if(is.null(stns$df[1,1])){
-      stns$df[1,1] <- startStn
+    if(is.null(stns)){
+      cat('stns is null setting to',startStn,'\n')
+      stns$stn <- startStn
+    } else {
+      cat('stns is not null setting to',stns$stn,'\n')
     }
     ## replace the UI with a table or something using stns$df
-    if(is.na(siteInfo$Name[stns$df[1,1]])){
+    if(is.na(siteInfo$Name[stns$stn])){
       HTML(paste("<br/><h3>Applethorpe</h3>"))
-    } else {
-      if(is.na(stns$df[2,1])){
-        HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"</h3>"))
-      } else {
-        HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"<br/>",siteInfo$Name[stns$df[2,1]],"</h3>"))
-      }
     }
   })
 
+
+  # else {
+  #   if(is.na(stns$df[2,1])){
+  #     HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"</h3>"))
+  #   } else {
+  #     HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"<br/>",siteInfo$Name[stns$df[2,1]],"</h3>"))
+  #   }
+  # }
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
@@ -189,8 +206,8 @@ shinyServer(function(input, output, session) {
       if ( is.null(input$startDate) ) {
         return(NULL) #slider not ready
       }
-      if(is.na(stns$df[1,1])){
-        stns$df[1,1] <- startStn
+      if(is.na(stns)){
+        stns$stn <- startStn
         #print(stns$df)
       }
       input$TriggerButton
@@ -199,22 +216,22 @@ shinyServer(function(input, output, session) {
       #startJDay <- isolate(as.numeric(format(input$startDate,'%j')))
       #doThePlot(isolate(selectedYear$Year),isolate(input$cType),stns$df[1,1],isolate(input$startDate),isolate(input$endDate))
       #doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate)
-      doThePlot(input$cType,stns$df[1,1],input$startDate,input$endDate)
+      doThePlot(input$cType,stns$stn,input$startDate,input$endDate)
     }) #renderPlot
   #})#observe
 
-  #need a second chill plot
-  #observe({
-    output$chillPlot2 <- renderPlotly({
-      if ( is.null(input$startDate) ){
-        return(NULL) #slider not ready
-      }
-      if(is.na(stns$df[2,1])){
-        return(NULL)
-      }
-      doThePlot(input$cType,stns$df[2,1],input$startDate,input$endDate)
-    }) #renderPlot
-  #})#observe
+  # #need a second chill plot
+  # #observe({
+  #   output$chillPlot2 <- renderPlotly({
+  #     if ( is.null(input$startDate) ){
+  #       return(NULL) #slider not ready
+  #     }
+  #     if(is.na(stns$df[2,1])){
+  #       return(NULL)
+  #     }
+  #     doThePlot(input$cType,stns$df[2,1],input$startDate,input$endDate)
+  #   }) #renderPlot
+  # #})#observe
 
   ### GDH Plot ###
   #observe({
@@ -226,27 +243,27 @@ shinyServer(function(input, output, session) {
       }
       if(debug)
         print('### GDH Plot ###')
-      if(is.na(stns$df[1,1])){
-        stns$df[1,1] <- startStn
+      if(is.na(stns)){
+        stns$stn <- startStn
       }
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[1,1],input$baseTemp) #selectedYear$Year
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$stn,input$baseTemp) #selectedYear$Year
 
     }) #renderPlot
   #})
 
-  #observe({
-    output$GDHPlot2 <- renderPlotly({
-      if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
-        return(NULL)
-      }
-      if(is.na(stns$df[2,1])){
-        return(NULL)
-      }
-      #loadTheData(stns$df[2,1])
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$baseTemp) # selectedYear$Year
-
-    }) #renderPlot
-  #})
+  # #observe({
+  #   output$GDHPlot2 <- renderPlotly({
+  #     if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
+  #       return(NULL)
+  #     }
+  #     if(is.na(stns$df[2,1])){
+  #       return(NULL)
+  #     }
+  #     #loadTheData(stns$df[2,1])
+  #     doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$baseTemp) # selectedYear$Year
+  #
+  #   }) #renderPlot
+  # #})
 
   #observe({
     output$TempPlot <- renderPlotly({
@@ -255,24 +272,23 @@ shinyServer(function(input, output, session) {
       }
       if(debug)
         print('### Temperature Plot ###')
-      if(is.na(stns$df[1,1])){
-        stns$df[1,1] <- startStn
+      if(is.na(stns)){
+        stns$stn <- startStn
       }
       #loadTheData(stns$df[1,1])
-      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[1,1]) # selectedYear$Year
+      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$stn) # selectedYear$Year
     })
   #})
 
   #observe({
-    output$TempPlot2 <- renderPlotly({
+    output$RainPlot <- renderPlotly({
       if (is.null(input$startDate) | is.null(input$endDate) ) {
         return(NULL) #sliders not ready
       }
-      if(is.na(stns$df[2,1])){
+      if(is.na(stns)){
         return(NULL)
       }
-      #loadTheData(stns$df[2,1])
-      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$df[2,1]) #selectedYear$Year
+      doTheRainPlot(selectedYear$Year,input$startDate,input$endDate,stns$stn) #selectedYear$Year
     })
   #})
 
@@ -391,7 +407,7 @@ shinyServer(function(input, output, session) {
     if (is.null(input$recentre)) {
       return(NULL)
     }
-    this <- stns$df$row[1]
+    this <- stns$stn
     rlng <- siteInfo$longitude[this]
     rlat <- siteInfo$latitude[this]
     cat(startStn,rlat,rlng,'\n')
@@ -416,35 +432,8 @@ shinyServer(function(input, output, session) {
       })
     }
     ####site$currentLoc <- rowNumber
-    if(nrow(stns$df) == 0){
-      stns$df <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
-    } else if(nrow(stns$df) == 1){
-      #print("add to 2nd row")
-      tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
-      stns$df <- rbind(stns$df, tmp)
-    } else {
-      #move 2nd row to first row and add to 2nd row, or replace 2 depending on FixTopStn
-      if(stns$df$row[2] == rowNumber){
-        #print("already have it, replace the df with just this stn")
-        stns$df <- stns$df[2,]
-      } else { # replace or shift
-        tmp <- data.frame(row=rowNumber, stn=siteInfo$Name[rowNumber])
-        if(input$FixTopStn){
-          #print("keep top")
-          stns$df <- stns$df[1,]
-          stns$df <- rbind(stns$df, tmp)
-        } else {
-          #print("replace top")
-          stns$df <- stns$df[2,]
-          stns$df <- rbind(stns$df, tmp)
-        }
-      }
-    }
-    if(nrow(stns$df) == 2){
-      if(stns$df[1,1] == stns$df[2,1]){
-        #print("Two the same")
-        stns$df <- stns$df[1,]
-      }
+    if(is.na(stns)){
+      stns$stn <- siteInfo$Name[rowNumber]
     }
     if(input$KeepLocation){
       if(debug)
