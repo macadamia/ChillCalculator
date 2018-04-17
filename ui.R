@@ -139,7 +139,7 @@ shinyUI(
           # )
         )#fluidPage
     ),
-    tabPanel("Temperature", value ='Temperature', busyIndicator("Calculation In Progress",wait = 0),
+    tabPanel("Temperature/Rainfall", value ='Temperature', busyIndicator("Calculation In Progress",wait = 0),
              fluidPage(
                fluidRow(
                  plotlyOutput("TempPlot")

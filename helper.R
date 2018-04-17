@@ -798,4 +798,64 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
 
 }
 
+doTheRainPlot <- function(YEAR,SDATE,EDATE,LOCATION){
+  if(debug)
+    print('doTherainPlot')
+
+  Year <- as.numeric(YEAR)
+
+  sJDay<-as.numeric(format(SDATE,'%j'))
+  eJDay<-as.numeric(format(EDATE,'%j'))
+
+
+  stn<-siteInfo$stnID[LOCATION]
+  lat<-siteInfo$latitude[LOCATION]
+  stnName<-siteInfo$Name[LOCATION]
+
+  #TODO
+  #this needs to be updated with rainfall data
+  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+  load(rdata)
+  maxRain <- minRain <- rep(0,366)
+
+  #curretly this is all calendar year stuff
+
+  tab.1<-getMet(stn,SDATE,EDATE)
+  JDays <- sJDay:eJDay
+  if(nrow(tab.1) < length(JDays) ){
+    #SILO not up to date
+    JDays <- JDays[1:nrow(tab.1)]
+  }
+  if(debug)
+    cat('returned data has',nrow(tab.1),'from day',sJDay,'to',eJDay,'Total Days:',eJDay - sJDay + 1,'\n')
+  rain <- tab.1$rain
+  jday <- tab.1$day
+
+  YLIM <- c(min(c(rain,minRain,maxRain),na.rm=T),max(c(rain,minRain,maxRain),na.rm=T))
+
+  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+  theData <- data.frame(date=labs,rain=rain,
+                        maxRlo=minRain[JDays],maxRhi=maxRain[JDays],
+                        jdays=JDays)
+
+  b <- list(
+    title = "Rainfall (mm)",
+    titlefont = f1,
+    showticklabels = TRUE,
+    tickangle = 0,
+    tickfont = f1
+  )
+  # p <- plot_ly(theData, x = ~date, y = ~maxRhi,  type = "scatter", mode='lines',name='Highest 10%',
+  #              line=list(color='transparent'),showlegend = F) %>%
+  #
+  #   add_trace(y = ~maxRlo,name='Lowest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
+  #
+  #   add_trace(y = ~rain,name='Rain',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
+  #
+  #   layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest',title=stnName)
+
+  p <- plot_ly(theData, x = ~date, y = ~rain,  type = "bar",name='Rainfall',showlegend = F) %>%
+
+    layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest')
+}
 

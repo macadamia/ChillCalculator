@@ -10,39 +10,38 @@ source('helper.R')
 
 shinyServer(function(input, output, session) {
 
+  stns <- reactiveValues()
+  stns$df <- data.frame(row=numeric(0),stn=character(0))
+
   observe({input$jscookie
     if(debug)
       print('running getcookie from observe')
   js$getcookie()
   if(debug)
     cat('cookie length',length(input$jscookie),':',input$jscookie,':\n')
-  if(length(input$jscookie) < 1){
-    if(debug)
-      print("No cookie (length 0)")
-    startStn <- which(siteInfo$Name == 'Applethorpe')
-    startTown <- which(gaz$PlaceName == 'Applethorpe')
-  } else {
+  if(length(input$jscookie) >= 1){
     if (!is.null(input$jscookie) & input$jscookie != '') {
       if(debug)
         cat("Found cookie", input$jscookie,length(input$jscookie), '\n')
-      startStn <- as.numeric(input$jscookie)
-      startTown <- which(gaz$PlaceName ==  siteInfo[as.numeric(input$jscookie),'Name'])
+      startStnRowID <- as.numeric(input$jscookie)
+      startTown <- which(gaz$PlaceName ==  siteInfo[startStnRowID,'Name'])
       #update the label in the
       #stns$df[1,1] <- startStn
-      stns <- startStn
-      if(debug)
-        cat('startStn',startStn,'startTown',startTown,'\n')
+      #stns <- startStn
     } else {
       if(debug)
         print("No cookie")
-      startStn <- which(siteInfo$Name == 'Applethorpe')
+      startStnRowID <- which(siteInfo$Name == 'Applethorpe')
       startTown <- which(gaz$PlaceName == 'Applethorpe')
     }
   }
-})
+  if(debug)
+    cat('startStn',startStnRowID, siteInfo[startStnRowID,'Name'], 'startTown',startTown,'\n')
+  stns$row <- startStnRowID
+  stns$stn <- siteInfo$stnID
+}) ## cookie stuff
 
-  stns <- reactiveValues()
-  # stns$df <- data.frame(row=numeric(0),stn=character(0))
+
 
 
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))# just used to update the Year drop down
@@ -86,37 +85,17 @@ shinyServer(function(input, output, session) {
 
 
 
-  # output$SelectedLocation <- renderUI({
-  #   if(is.null(stns$df[1,1])){
-  #     stns$df[1,1] <- startStn
-  #   }
-  #   ## replace the UI with a table or something using stns$df
-  #   if(is.na(siteInfo$Name[stns$df[1,1]])){
-  #     HTML(paste("<br/><h3>Applethorpe</h3>"))
-  #   }
-  # })
-
   output$SelectedLocation <- renderUI({
     if(is.null(stns)){
-      cat('stns is null setting to',startStn,'\n')
-      stns$stn <- startStn
+      return(NULL)
     } else {
-      cat('stns is not null setting to',stns$stn,'\n')
-    }
-    ## replace the UI with a table or something using stns$df
-    if(is.na(siteInfo$Name[stns$stn])){
-      HTML(paste("<br/><h3>Applethorpe</h3>"))
+      if(debug)
+        cat(stns$row,"<br/><h3>",siteInfo$Name[stns$row],"</h3>\n")
+      HTML(paste("<br/><h3>",siteInfo$Name[stns$row],"</h3>"))
     }
   })
 
 
-  # else {
-  #   if(is.na(stns$df[2,1])){
-  #     HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"</h3>"))
-  #   } else {
-  #     HTML(paste("<br/><h3>",siteInfo$Name[stns$df[1,1]],"<br/>",siteInfo$Name[stns$df[2,1]],"</h3>"))
-  #   }
-  # }
 
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
@@ -206,17 +185,17 @@ shinyServer(function(input, output, session) {
       if ( is.null(input$startDate) ) {
         return(NULL) #slider not ready
       }
-      if(is.na(stns)){
-        stns$stn <- startStn
-        #print(stns$df)
-      }
+      # if(is.na(stns)){
+      #   startStnRowID <- startStn
+      #   #print(stns$df)
+      # }
       input$TriggerButton
       if(debug)
         cat('\n\n### Chill Plot ###\n')
       #startJDay <- isolate(as.numeric(format(input$startDate,'%j')))
       #doThePlot(isolate(selectedYear$Year),isolate(input$cType),stns$df[1,1],isolate(input$startDate),isolate(input$endDate))
       #doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate)
-      doThePlot(input$cType,stns$stn,input$startDate,input$endDate)
+      doThePlot(input$cType,stns$row,input$startDate,input$endDate)
     }) #renderPlot
   #})#observe
 
@@ -243,10 +222,10 @@ shinyServer(function(input, output, session) {
       }
       if(debug)
         print('### GDH Plot ###')
-      if(is.na(stns)){
-        stns$stn <- startStn
-      }
-      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$stn,input$baseTemp) #selectedYear$Year
+      # if(is.na(stns)){
+      #   startStnRowID <- startStn
+      # }
+      doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$row,input$baseTemp) #selectedYear$Year
 
     }) #renderPlot
   #})
@@ -272,11 +251,11 @@ shinyServer(function(input, output, session) {
       }
       if(debug)
         print('### Temperature Plot ###')
-      if(is.na(stns)){
-        stns$stn <- startStn
-      }
+      # if(is.na(stns)){
+      #   startStnRowID <- startStn
+      # }
       #loadTheData(stns$df[1,1])
-      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$stn) # selectedYear$Year
+      doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$row) # selectedYear$Year
     })
   #})
 
@@ -285,10 +264,10 @@ shinyServer(function(input, output, session) {
       if (is.null(input$startDate) | is.null(input$endDate) ) {
         return(NULL) #sliders not ready
       }
-      if(is.na(stns)){
-        return(NULL)
-      }
-      doTheRainPlot(selectedYear$Year,input$startDate,input$endDate,stns$stn) #selectedYear$Year
+      # if(is.na(stns)){
+      #   return(NULL)
+      # }
+      doTheRainPlot(selectedYear$Year,input$startDate,input$endDate,stns$row) #selectedYear$Year
     })
   #})
 
@@ -352,7 +331,7 @@ shinyServer(function(input, output, session) {
         }
         if(!is.null(stnList)){
           output$BuildStnLocations <- renderUI({
-            selectInput("stnFound", label = h4("Select Station"),choices = stnList, size = 10, selectize = F,selected = startStn)
+            selectInput("stnFound", label = h4("Select Station"),choices = stnList, size = 10, selectize = F,selected = stns$row)
           })
         }
     }
@@ -407,7 +386,7 @@ shinyServer(function(input, output, session) {
     if (is.null(input$recentre)) {
       return(NULL)
     }
-    this <- stns$stn
+    this <- startStn
     rlng <- siteInfo$longitude[this]
     rlat <- siteInfo$latitude[this]
     cat(startStn,rlat,rlng,'\n')
@@ -422,7 +401,8 @@ shinyServer(function(input, output, session) {
     }
     text<-paste("Latitude ", click$lat, "Longtitude ", click$lng)
     rowNumber <- which(siteInfo$stnID == click$id)
-    text2<-paste("You've selected point", click$id,'at row #',rowNumber)
+    if(debug)
+      print(paste("You've selected point", click$id,'at row #',rowNumber))
     perc <- (siteInfo$PercMaxTObs[rowNumber]+siteInfo$PercMinTObs[rowNumber])/2*100
     warning <- ''
     if(perc < 0.5) {
@@ -431,13 +411,12 @@ shinyServer(function(input, output, session) {
         HTML(paste(warning,siteInfo$Name[rowNumber],'recorded temperature',formatC(perc,format='f',digits=1),'% of the time<br/>',sep=' '))
       })
     }
-    ####site$currentLoc <- rowNumber
-    if(is.na(stns)){
-      stns$stn <- siteInfo$Name[rowNumber]
-    }
+    ###site$currentLoc <- rowNumber
+    stns$row <- rowNumber
+
     if(input$KeepLocation){
       if(debug)
-        print("store Cookie")
+        cat("store Cookie", rowNumber, siteInfo$Name[rowNumber],'\n')
       js$setcookie(rowNumber)
       js$getcookie()
       if(debug)
@@ -446,3 +425,5 @@ shinyServer(function(input, output, session) {
 
   })
 })
+
+

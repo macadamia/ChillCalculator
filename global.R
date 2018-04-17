@@ -36,5 +36,5 @@ if(!useAPSIM){
   library(RCurl)
 }
 
-startStn <- which(siteInfo$Name == 'Applethorpe')
+startStnRowID <- which(siteInfo$Name == 'Applethorpe')
 startTown <- which(gaz$PlaceName == 'Applethorpe')
