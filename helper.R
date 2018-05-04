@@ -463,11 +463,19 @@ calcHeat <- function(tab.met,lat,sJDay){
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$startDate)
 doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
 
-  # YEAR<-2017
+  # YEAR<-2018
   # CHILLTYPE<-1
   # LOCATION<-317
-  # STARTDATE<-as.Date('2017-3-1')
-  # EDATE<-as.Date('2017-05-21')
+  # STARTDATE<-as.Date('2018-3-1')
+  # EDATE<-as.Date('2018-5-3')
+  #
+  # print(CHILLTYPE)
+  # print(LOCATION)
+  # print(STARTDATE)
+  # print(EDATE)
+
+
+  expectedEndJDay <- as.numeric(format(EDATE,'%j'))
 
   if(debug)
     print('doThePlot')
@@ -524,7 +532,11 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
       eJDay <- tail(jday,1)
       actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
       todayDate <- format(actualEndDate,'%d %b %Y')
+      print(as.character(actualEndDate))
+
     }
+    print(jday)
+    print(eJDay)
     chill <- chill[which(jday == sJDay):which(jday == eJDay)]
 
   }
@@ -558,7 +570,7 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
     }
 
     #cat('create data frame theData\n')
-    #cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
+    cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
     theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
     #return(list(theData =data.frame(JDays,labs, chill,LTHot,LTCold),YLAB=YLAB,chillMessage=chillMessage))
     b <- list(

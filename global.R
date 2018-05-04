@@ -14,7 +14,7 @@ library(shinyjs)
 
 # arm online #4E7707
 #franchise blue #007EB1
-
+Sys.setenv(TZ="Australia/Brisbane")
 
 userLocationSet <- F
 
