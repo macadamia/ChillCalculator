@@ -64,7 +64,9 @@ shinyUI(
       column(width=12,uiOutput("Logos"))
     ),
     fluidRow(class = 'headerRow',
-             column(width=12,uiOutput("Share"))
+             column(width=12,uiOutput("Share")),
+             HTML("<h1>
+Outage Notice: Site will be unavailable on Saturday 5 May 2018 approximately from 9am to 4pm AEST due to server maintenance.</h1>")
     ),
 
     fluidRow(class = 'headerRow',

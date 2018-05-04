@@ -236,7 +236,7 @@ getMet<-function(stn,startDate,endDate){
     }
     save(tab.1,file=fName) # per session
     #store to dropbox
-    drop_upload(fName,dest='ChillCalcStore',dtoken=token)
+    drop_upload(fName, path = 'ChillCalcStore', dtoken = token, verbose = F)
     cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)
