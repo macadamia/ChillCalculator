@@ -38,3 +38,5 @@ if(!useAPSIM){
 
 startStnRowID <- which(siteInfo$Name == 'Applethorpe')
 startTown <- which(gaz$PlaceName == 'Applethorpe')
+
+source('helper.R')

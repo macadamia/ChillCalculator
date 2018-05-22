@@ -5,13 +5,9 @@ TheAPIKey <- readRDS('Data/WillyWeather.rds')
 
 #WillyWeatherIDs <- readRDS('Data/WillyWeatherInfo.rds')
 
-#Dropbox
 token <- readRDS('Data/droptokenchillcalc.rds')
 #drop_acc(dtoken=token)
 
-useAPSIM <- T
-
-debug <- T
 
 if(!useAPSIM){
   longPaddock <- readRDS('Data/LongPaddock.rds')

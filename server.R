@@ -6,12 +6,12 @@ library(leaflet)
 library(plotly)
 library(rdrop2)
 
-source('helper.R')
-
 shinyServer(function(input, output, session) {
 
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
+
+
 
   observe({input$jscookie
     if(debug)
@@ -180,40 +180,44 @@ shinyServer(function(input, output, session) {
 
 
   ### Chill Plot ###
- #observe( {
+
     output$chillPlot <- renderPlotly({
-      if ( is.null(input$startDate) ) {
-        return(NULL) #slider not ready
+      if(is.null(input$isMobile )){
+        print('mobile is null')
       }
-      # if(is.na(stns)){
-      #   startStnRowID <- startStn
-      #   #print(stns$df)
-      # }
+      if(input$isMobile){
+        print('this is a mobile device')
+      } else {
+        print('not a mobile device')
+      }
+      if ( is.null(input$startDate) | input$isMobile ) {
+        return(NULL)
+      }
       input$TriggerButton
       if(debug)
         cat('\n\n### Chill Plot ###\n')
-      #startJDay <- isolate(as.numeric(format(input$startDate,'%j')))
-      #doThePlot(isolate(selectedYear$Year),isolate(input$cType),stns$df[1,1],isolate(input$startDate),isolate(input$endDate))
-      #doThePlot(selectedYear$Year,input$cType,stns$df[1,1],input$startDate,input$endDate)
+
       doThePlot(input$cType,stns$row,input$startDate,input$endDate)
     }) #renderPlot
-  #})#observe
 
-  # #need a second chill plot
-  # #observe({
-  #   output$chillPlot2 <- renderPlotly({
-  #     if ( is.null(input$startDate) ){
-  #       return(NULL) #slider not ready
-  #     }
-  #     if(is.na(stns$df[2,1])){
-  #       return(NULL)
-  #     }
-  #     doThePlot(input$cType,stns$df[2,1],input$startDate,input$endDate)
-  #   }) #renderPlot
-  # #})#observe
+
+    output$itsAMobile <- renderText({
+      if(is.null(input$isMobile )){
+        print('mobile is null')
+      }
+      if(input$isMobile){
+        print('this is a mobile device')
+      } else {
+        print('not a mobile device')
+      }
+      if ( is.null(input$startDate) | !input$isMobile ) {
+        return(NULL)
+      }
+      "You are on a mobile device"
+    })
+
 
   ### GDH Plot ###
-  #observe({
     output$GDHPlot <- renderPlotly({
 
       #print("gType and startDate...")
@@ -228,21 +232,8 @@ shinyServer(function(input, output, session) {
       doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$row,input$baseTemp) #selectedYear$Year
 
     }) #renderPlot
-  #})
 
-  # #observe({
-  #   output$GDHPlot2 <- renderPlotly({
-  #     if( is.null(input$gType) | is.null(input$startDate) | is.null(input$endDate) | is.null(input$baseTemp )){
-  #       return(NULL)
-  #     }
-  #     if(is.na(stns$df[2,1])){
-  #       return(NULL)
-  #     }
-  #     #loadTheData(stns$df[2,1])
-  #     doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,stns$df[2,1],input$baseTemp) # selectedYear$Year
-  #
-  #   }) #renderPlot
-  # #})
+
 
   #observe({
     output$TempPlot <- renderPlotly({

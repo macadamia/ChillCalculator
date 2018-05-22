@@ -2,12 +2,20 @@
 #ui.R
 
 
-# for user location
+
+mobileDetect <- function(inputId, value = 0) {
+  tagList(
+    singleton(tags$head(tags$script(src = "mobile.js"))),
+    tags$input(id = inputId,
+               class = "mobile-element",
+               type = "hidden")
+  )
+}
+
 
 shinyUI(
 
   fluidPage(
-
     includeCSS( "www/assets/v3/css/qg-main.css"),
     tags$head(
       tags$script(src = "js.cookie.js")
@@ -60,13 +68,12 @@ shinyUI(
       tags$script("assets/v3/js/qg-main.js")
     ),
 
+
     fluidRow(
       column(width=12,uiOutput("Logos"))
     ),
     fluidRow(class = 'headerRow',
-             column(width=12,uiOutput("Share")),
-             HTML("<h1>
-Outage Notice: Site will be unavailable on Saturday 5 May 2018 approximately from 9am to 4pm AEST due to server maintenance.</h1>")
+             column(width=12,uiOutput("Share"))
     ),
 
     fluidRow(class = 'headerRow',
@@ -94,9 +101,6 @@ Outage Notice: Site will be unavailable on Saturday 5 May 2018 approximately fro
                     htmlOutput("StationInfo"),
                     uiOutput("NTowns")
              ),
-             # column(width=2, align = 'left',
-             #  checkboxInput("FixTopStn","Keep upper station",F,width='100%')
-             # ),
              column(width=4, align = 'left',
                     checkboxInput("KeepLocation","Remember this station",F,width='100%'),
                     actionButton("recentre","Recentre")
@@ -108,23 +112,22 @@ Outage Notice: Site will be unavailable on Saturday 5 May 2018 approximately fro
           )
         )
       ),
-    tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
-      fluidPage(
-        fluidRow(
-          column(width=6,
-                 radioButtons("cType", inline = T, label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
-          )
-        ),#fluidRow
-        fluidRow(
-          plotlyOutput("chillPlot")
-        )
-        # ,#fluidRow
-        # fluidRow(
-        #   plotlyOutput("chillPlot2")
-        # )
+      tabPanel("Chill", value='Chill',busyIndicator("Calculation In progress",wait = 0),
+        fluidPage(
+          fluidRow(
+            column(width=6,
+                   radioButtons("cType", inline = T, label = h4("Chill"), choices = list("Portions" = 1, "Hours" = 2, "Units" = 3),selected = 1)
+            )
+          ),#fluidRow
 
-      ) #fluidPage
-  ),
+          fluidRow(
+            mobileDetect('isMobile'),
+            textOutput('itsAMobile'),
+            plotlyOutput("chillPlot")
+          )
+
+        ) #fluidPage
+      ),
     tabPanel("Growing Degrees", value ='Growing Degrees', busyIndicator("Calculation In Progress",wait = 0),
         fluidPage(
           fluidRow(

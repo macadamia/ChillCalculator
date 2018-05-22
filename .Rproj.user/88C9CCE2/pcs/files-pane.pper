@@ -1,13 +1,13 @@
 {
-    "path" : "~/GitHub/ChillCalculator",
+    "path" : "~/GitHub/ChillCalculator/www",
     "sortOrder" : [
         {
-            "ascending" : false,
-            "columnIndex" : 4
+            "ascending" : true,
+            "columnIndex" : 2
         },
         {
             "ascending" : false,
-            "columnIndex" : 2
+            "columnIndex" : 4
         }
     ]
 }
