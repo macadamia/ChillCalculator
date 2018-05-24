@@ -1,3 +1,18 @@
+siteInfo <- readRDS('Data/SiteInfo.rds')
+gaz <- readRDS('Data/Gazetteer2010.rds')
+THEURL <- readRDS('Data/extraInfo.rds')
+TheAPIKey <- readRDS('Data/WillyWeather.rds')
+
+#WillyWeatherIDs <- readRDS('Data/WillyWeatherInfo.rds')
+
+token <- readRDS('Data/droptokenchillcalc.rds')
+#drop_acc(dtoken=token)
+
+
+if(!useAPSIM){
+  longPaddock <- readRDS('Data/LongPaddock.rds')
+  library(RCurl)
+}
 
 checkRData <- function(fname){
   #is it local already
@@ -7,15 +22,9 @@ checkRData <- function(fname){
     return(T)
   } else {
     dname <- unlist(strsplit(fname,'Data/'))[2]
-    dropboxFile <- paste('ChillCalcStore',dname,sep='/')
+    test <- drop_get(paste('ChillCalcStore',dname,sep='/'),overwrite=T,local_file = fname,dtoken=token)
     if(debug)
-      cat('Checking for', dropboxFile,'\n')
-    test <- F
-    if(drop_exists(path = dropboxFile, dtoken = token)){
-      test <- drop_download(path = dropboxFile ,local_path = fname,overwrite = T, dtoken = token, verbose = F)
-      if(debug)
-        cat('Found',fname,'on Dropbox/ChillCalcStore\n')
-    }
+      cat('Found',fname,'on Dropbox/ChillCalcStore\n')
     return(test)
   }
 }
@@ -128,8 +137,7 @@ getMet<-function(stn,startDate,endDate){
 
   if(debug)
     cat('Looking for',fName,'\n')
-  if(debug)
-    cat('Check on Dropbox\n')
+
   fileFound <- checkRData(fName) #checks if stored this session then tries dropbox
 
   if(!fileFound & debug){
@@ -159,8 +167,6 @@ getMet<-function(stn,startDate,endDate){
     if(debug)
       cat('We are good to go?',goodToGo,'\n')
   }
-  if(debug)
-    cat('fileFound',fileFound,'goodToGo',goodToGo,'\n')
   if(!fileFound | (fileFound & !goodToGo)){
     if(debug)
       cat('Geting from net\n')
@@ -226,7 +232,7 @@ getMet<-function(stn,startDate,endDate){
     }
     save(tab.1,file=fName) # per session
     #store to dropbox
-    drop_upload(fName, path = 'ChillCalcStore', dtoken = token, verbose = T)
+    drop_upload(fName, dest = 'ChillCalcStore', dtoken = token, verbose = F)
     cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)
@@ -598,6 +604,99 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
   }
 }
 
+getTheChill <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
+
+  # YEAR<-2017
+  # CHILLTYPE<-1
+  # LOCATION<-317
+  # STARTDATE<-as.Date('2017-3-1')
+  # EDATE<-as.Date('2017-05-21')
+
+  if(debug)
+    print('getTheChill')
+
+  #need to check the year in case we did a GD with across the years
+  sYear <- as.numeric(format(STARTDATE,'%Y'))
+  eYear <- as.numeric(format(EDATE,'%Y'))
+  if(eYear != sYear){
+    #print('Update the end year from previous multiyear')
+    eJDay <- as.numeric(format(EDATE,'%j'))
+    EDATE <- as.Date(paste(sYear,eJDay,'sep=-'),'%Y-%j')
+
+  }
+
+  Year <- as.numeric(format(STARTDATE,'%Y'))
+  sJDay <- as.numeric(format(STARTDATE,'%j'))
+  eJDay <- as.numeric(format(EDATE,'%j'))
+
+  if(CHILLTYPE == 1){
+    YLAB='Chill Portions'
+  }
+  if(CHILLTYPE == 2){
+    YLAB='Chill Hours'
+  }
+  if(CHILLTYPE == 3){
+    YLAB='Chill Units'
+  }
+
+  stn<-siteInfo$stnID[LOCATION]
+  lat<-siteInfo$latitude[LOCATION]
+  stnName<-siteInfo$Name[LOCATION]
+
+
+  tab.1<-getMet(stn,STARTDATE,EDATE)
+  if(!is.null(tab.1)){
+    if(debug)
+      cat('Got met, now calc chill for',Year,'\n')
+    res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
+    chill <- res$chill
+    maxChill <- res$maxChill
+    jday <- res$jday
+    hours <- res$hours
+    hour24 <- which(hours==24)
+
+    jday <- jday[hour24]
+    chill <- chill[hour24]
+
+    #does eJDay == tail(jday,1)
+    todayDate <- format(EDATE,'%d %b %Y')
+    if( eJDay != tail(jday,1) ){
+      eJDay <- tail(jday,1)
+      actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
+      todayDate <- format(actualEndDate,'%d %b %Y')
+    }
+    chill <- chill[which(jday == sJDay):which(jday == eJDay)]
+
+  }
+  #cat('Get LT Data\n')
+  tab.LT <- getMet(stn,as.Date('1981-01-01'),as.Date('2010-12-31'))
+  if(!is.null(tab.LT)){
+    #cat('Calc LT Chill\n')
+    LTData <- getLTCold(tab.LT,sJDay, eJDay,lat, CHILLTYPE)
+
+    LTChill <- LTData$CU
+    LTHot <- LTData$CUHot
+    LTCold <- LTData$CUCold
+
+    JDays <- sJDay:eJDay
+
+    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+    nJdays <- length(JDays)
+
+    notNA <- which(!is.na(chill))
+
+    chill <- chill[notNA]
+
+    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+
+    Current <- tail(chill,1)
+    Low <- tail(LTHot,1)
+    High <- tail(LTCold,1)
+
+    return(data.frame(Current,Low,High))
+  }
+}
+
 #doTheHeatPlot(selectedYear$Year,input$gType,input$startDate,input$endDate,site$currentLoc,input$baseTemp)
 doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
 #
@@ -800,4 +899,64 @@ doTheTempPlot <- function(YEAR,SDATE,EDATE,LOCATION){
 
 }
 
+doTheRainPlot <- function(YEAR,SDATE,EDATE,LOCATION){
+  if(debug)
+    print('doTherainPlot')
+
+  Year <- as.numeric(YEAR)
+
+  sJDay<-as.numeric(format(SDATE,'%j'))
+  eJDay<-as.numeric(format(EDATE,'%j'))
+
+
+  stn<-siteInfo$stnID[LOCATION]
+  lat<-siteInfo$latitude[LOCATION]
+  stnName<-siteInfo$Name[LOCATION]
+
+  #TODO
+  #this needs to be updated with rainfall data
+  rdata <- file.path('Data',paste(stn,'.RData',sep=''))
+  load(rdata)
+  maxRain <- minRain <- rep(0,366)
+
+  #curretly this is all calendar year stuff
+
+  tab.1<-getMet(stn,SDATE,EDATE)
+  JDays <- sJDay:eJDay
+  if(nrow(tab.1) < length(JDays) ){
+    #SILO not up to date
+    JDays <- JDays[1:nrow(tab.1)]
+  }
+  if(debug)
+    cat('returned data has',nrow(tab.1),'from day',sJDay,'to',eJDay,'Total Days:',eJDay - sJDay + 1,'\n')
+  rain <- tab.1$rain
+  jday <- tab.1$day
+
+  YLIM <- c(min(c(rain,minRain,maxRain),na.rm=T),max(c(rain,minRain,maxRain),na.rm=T))
+
+  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+  theData <- data.frame(date=labs,rain=rain,
+                        maxRlo=minRain[JDays],maxRhi=maxRain[JDays],
+                        jdays=JDays)
+
+  b <- list(
+    title = "Rainfall (mm)",
+    titlefont = f1,
+    showticklabels = TRUE,
+    tickangle = 0,
+    tickfont = f1
+  )
+  # p <- plot_ly(theData, x = ~date, y = ~maxRhi,  type = "scatter", mode='lines',name='Highest 10%',
+  #              line=list(color='transparent'),showlegend = F) %>%
+  #
+  #   add_trace(y = ~maxRlo,name='Lowest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(246,100,100,0.5)') %>%
+  #
+  #   add_trace(y = ~rain,name='Rain',showlegend = F,line=list(color='rgb(246,80,80)')) %>%
+  #
+  #   layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest',title=stnName)
+
+  p <- plot_ly(theData, x = ~date, y = ~rain,  type = "bar",name='Rainfall',showlegend = F) %>%
+
+    layout(xaxis=a,yaxis=b,margin=margin, hovermode = 'closest')
+}
 
