@@ -232,7 +232,7 @@ getMet<-function(stn,startDate,endDate){
     }
     save(tab.1,file=fName) # per session
     #store to dropbox
-    drop_upload(fName, path = 'ChillCalcStore', dtoken = token, verbose = F)
+    drop_upload(fName, dest = 'ChillCalcStore', dtoken = token, verbose = F)
     cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)
@@ -589,6 +589,99 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
       add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
       layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
     }
+  }
+}
+
+getTheChill <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
+
+  # YEAR<-2017
+  # CHILLTYPE<-1
+  # LOCATION<-317
+  # STARTDATE<-as.Date('2017-3-1')
+  # EDATE<-as.Date('2017-05-21')
+
+  if(debug)
+    print('getTheChill')
+
+  #need to check the year in case we did a GD with across the years
+  sYear <- as.numeric(format(STARTDATE,'%Y'))
+  eYear <- as.numeric(format(EDATE,'%Y'))
+  if(eYear != sYear){
+    #print('Update the end year from previous multiyear')
+    eJDay <- as.numeric(format(EDATE,'%j'))
+    EDATE <- as.Date(paste(sYear,eJDay,'sep=-'),'%Y-%j')
+
+  }
+
+  Year <- as.numeric(format(STARTDATE,'%Y'))
+  sJDay <- as.numeric(format(STARTDATE,'%j'))
+  eJDay <- as.numeric(format(EDATE,'%j'))
+
+  if(CHILLTYPE == 1){
+    YLAB='Chill Portions'
+  }
+  if(CHILLTYPE == 2){
+    YLAB='Chill Hours'
+  }
+  if(CHILLTYPE == 3){
+    YLAB='Chill Units'
+  }
+
+  stn<-siteInfo$stnID[LOCATION]
+  lat<-siteInfo$latitude[LOCATION]
+  stnName<-siteInfo$Name[LOCATION]
+
+
+  tab.1<-getMet(stn,STARTDATE,EDATE)
+  if(!is.null(tab.1)){
+    if(debug)
+      cat('Got met, now calc chill for',Year,'\n')
+    res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
+    chill <- res$chill
+    maxChill <- res$maxChill
+    jday <- res$jday
+    hours <- res$hours
+    hour24 <- which(hours==24)
+
+    jday <- jday[hour24]
+    chill <- chill[hour24]
+
+    #does eJDay == tail(jday,1)
+    todayDate <- format(EDATE,'%d %b %Y')
+    if( eJDay != tail(jday,1) ){
+      eJDay <- tail(jday,1)
+      actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
+      todayDate <- format(actualEndDate,'%d %b %Y')
+    }
+    chill <- chill[which(jday == sJDay):which(jday == eJDay)]
+
+  }
+  #cat('Get LT Data\n')
+  tab.LT <- getMet(stn,as.Date('1981-01-01'),as.Date('2010-12-31'))
+  if(!is.null(tab.LT)){
+    #cat('Calc LT Chill\n')
+    LTData <- getLTCold(tab.LT,sJDay, eJDay,lat, CHILLTYPE)
+
+    LTChill <- LTData$CU
+    LTHot <- LTData$CUHot
+    LTCold <- LTData$CUCold
+
+    JDays <- sJDay:eJDay
+
+    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+    nJdays <- length(JDays)
+
+    notNA <- which(!is.na(chill))
+
+    chill <- chill[notNA]
+
+    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+
+    Current <- tail(chill,1)
+    Low <- tail(LTHot,1)
+    High <- tail(LTCold,1)
+
+    return(data.frame(Current,Low,High))
   }
 }
 

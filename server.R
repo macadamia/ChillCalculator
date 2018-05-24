@@ -11,8 +11,6 @@ shinyServer(function(input, output, session) {
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
 
-
-
   observe({input$jscookie
     if(debug)
       print('running getcookie from observe')
@@ -25,9 +23,6 @@ shinyServer(function(input, output, session) {
         cat("Found cookie", input$jscookie,length(input$jscookie), '\n')
       startStnRowID <- as.numeric(input$jscookie)
       startTown <- which(gaz$PlaceName ==  siteInfo[startStnRowID,'Name'])
-      #update the label in the
-      #stns$df[1,1] <- startStn
-      #stns <- startStn
     } else {
       if(debug)
         print("No cookie")
@@ -41,12 +36,8 @@ shinyServer(function(input, output, session) {
   stns$stn <- siteInfo$stnID
 }) ## cookie stuff
 
-
-
-
   currentYear <- as.numeric(format(Sys.Date(), "%Y"))# just used to update the Year drop down
 
-  #list(Year=as.numeric(format(Sys.Date(), "%Y")))
   selectedYear <-  reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
 
   results <- reactive({
@@ -54,7 +45,6 @@ shinyServer(function(input, output, session) {
   })
 
   towns <- reactive({
-    #print('Search for Towns')
     searchForPlace(input$Town)
   })
 
@@ -179,7 +169,7 @@ shinyServer(function(input, output, session) {
   })
 
 
-  ### Chill Plot ###
+  ### Chill Plot/ Table ###
 
     output$chillPlot <- renderPlotly({
       if(is.null(input$isMobile )){
@@ -201,19 +191,20 @@ shinyServer(function(input, output, session) {
     }) #renderPlot
 
 
-    output$itsAMobile <- renderText({
+    output$itsAMobile <- renderTable({
       if(is.null(input$isMobile )){
         print('mobile is null')
       }
-      if(input$isMobile){
-        print('this is a mobile device')
-      } else {
-        print('not a mobile device')
-      }
-      if ( is.null(input$startDate) | !input$isMobile ) {
+      if ( is.null(input$startDate) | ! input$isMobile ) {
         return(NULL)
       }
-      "You are on a mobile device"
+      input$TriggerButton
+      if(debug)
+        cat('\n\n### Chill Plot Text ###\n')
+
+      theTable<-getTheChill(input$cType,stns$row,input$startDate,input$endDate)
+
+
     })
 
 

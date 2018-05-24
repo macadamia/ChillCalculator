@@ -1,18 +1,6 @@
 #Chill Units Calculator
 #ui.R
 
-
-
-mobileDetect <- function(inputId, value = 0) {
-  tagList(
-    singleton(tags$head(tags$script(src = "mobile.js"))),
-    tags$input(id = inputId,
-               class = "mobile-element",
-               type = "hidden")
-  )
-}
-
-
 shinyUI(
 
   fluidPage(
@@ -121,8 +109,7 @@ shinyUI(
           ),#fluidRow
 
           fluidRow(
-            mobileDetect('isMobile'),
-            textOutput('itsAMobile'),
+            tableOutput('itsAMobile'),
             plotlyOutput("chillPlot")
           )
 
@@ -138,10 +125,6 @@ shinyUI(
           fluidRow(
             plotlyOutput("GDHPlot")
           )
-          # ,
-          # fluidRow(
-          #   plotlyOutput("GDHPlot2")
-          # )
         )#fluidPage
     ),
     tabPanel("Temperature/Rainfall", value ='Temperature', busyIndicator("Calculation In Progress",wait = 0),
