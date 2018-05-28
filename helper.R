@@ -439,6 +439,44 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
+calcChillGrower <- function(grower,sJDay,eJDay,CHILLTYPE){
+  if(debug)
+    print('calcChillGrower')
+  if(debug){
+    print(dim(grower))
+  }
+  #create the stack
+  stack <- data.frame(Year=as.numeric(format(growerData$weather[,1],'%Y')),
+    JDay=as.numeric(format(growerData$weather[,1],'%j')),
+    Temp=growerData$weather[,2])
+  # This data frame must have a column for Year, a column for JDay (Julian date, or day of the year),
+  # a column for Hour and a column for Temp (hourly temperature).
+
+  #get chill and heating info
+  ch<-chilling_hourtable(stack,sJDay)
+
+
+  if(CHILLTYPE == 1){
+    chill<-ch$Chill_Portions
+    units<-'Chill Portions'
+    these<-1:length(ch$JDay)
+  }
+  if(CHILLTYPE == 2){
+    chill<-ch$Chilling_Hours
+    units<-'Chiling Hours < 7.2ºC'
+    these<-1:length(ch$JDay)
+  }
+  if(CHILLTYPE == 3){
+    these<-which(ch$JDay >= sJDay & ch$JDay <= eJDay)
+    chill<-ch$Chill_Units[these]
+    units<-'Utah Chill Units'
+  }
+
+  maxChill<-round(max(chill),1)
+
+  return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
+}
+
 calcHeat <- function(tab.met,lat,sJDay){
   if(debug)
     print('calcHeat')
@@ -467,7 +505,7 @@ calcHeat <- function(tab.met,lat,sJDay){
 
 
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$startDate)
-doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
+doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
 
   # YEAR<-2018
   # CHILLTYPE<-1
@@ -480,7 +518,29 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
   # print(STARTDATE)
   # print(EDATE)
 
+  if(debug & GROWER){
+    print('we have grower data')
+    print(head(GROWERDATA))
+  } else {
+    print("SILO data")
+  }
 
+  if(GROWER & !is.null(GROWERDATA)){
+
+    #we are using grower hourly data
+    localData <- data.frame(dateTime=as.Date(GROWERDATA[,1],'%d/%m/%y %H:%M:%S'),theTemp=GROWERDATA[,2])
+    expectedEndJDay <- as.numeric(format(tail(localData$dateTime,1),'%j'))
+    STARTDATE <- head(localData$dateTime,1)
+    EDATE <- tail(localData$dateTime,1)
+    if(debug){
+      print('Grower data')
+      print(head(localData$dateTime,1))
+      print(head(localData))
+    }
+  }
+  if(debug){
+    cat(STARTDATE,EDATE,'\n')
+  }
   expectedEndJDay <- as.numeric(format(EDATE,'%j'))
 
   if(debug)
@@ -513,96 +573,115 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
     YLAB='Chill Units'
   }
 
-  stn<-siteInfo$stnID[LOCATION]
-  lat<-siteInfo$latitude[LOCATION]
-  stnName<-siteInfo$Name[LOCATION]
+  if(GROWER){
+    stn<-'Grower Data'
+    lat<-NULL
+    stnName<-'Grower Data'
+  } else {
+    stn<-siteInfo$stnID[LOCATION]
+    lat<-siteInfo$latitude[LOCATION]
+    stnName<-siteInfo$Name[LOCATION]
+  }
 
 
-  tab.1<-getMet(stn,STARTDATE,EDATE)
-  if(!is.null(tab.1)){
-    if(debug)
-      cat('Got met, now calc chill for',Year,'\n')
-    res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
-    chill <- res$chill
-    maxChill <- res$maxChill
-    jday <- res$jday
-    hours <- res$hours
-    hour24 <- which(hours==24)
-
-    jday <- jday[hour24]
-    chill <- chill[hour24]
-
-    #does eJDay == tail(jday,1)
-    todayDate <- format(EDATE,'%d %b %Y')
-    if( eJDay != tail(jday,1) ){
-      eJDay <- tail(jday,1)
-      actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
-      todayDate <- format(actualEndDate,'%d %b %Y')
-      print(as.character(actualEndDate))
-
+  if(!GROWER){
+    tab.1<-getMet(stn,STARTDATE,EDATE)
+    if(!is.null(tab.1)){
+      if(debug)
+        cat('Got met, now calc chill for',Year,'\n')
+      res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
     }
-    print(jday)
-    print(eJDay)
-    chill <- chill[which(jday == sJDay):which(jday == eJDay)]
+  } else {
+    res <- calcChillGrower(tab.1,sJDay,eJDay,CHILLTYPE)
+  }
+  chill <- res$chill
+  maxChill <- res$maxChill
+  jday <- res$jday
+  hours <- res$hours
+  hour24 <- which(hours==24)
+
+  jday <- jday[hour24]
+  chill <- chill[hour24]
+
+  #does eJDay == tail(jday,1)
+  todayDate <- format(EDATE,'%d %b %Y')
+  if( eJDay != tail(jday,1) ){
+    eJDay <- tail(jday,1)
+    actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
+    todayDate <- format(actualEndDate,'%d %b %Y')
+    print(as.character(actualEndDate))
 
   }
+  print(jday)
+  print(eJDay)
+  chill <- chill[which(jday == sJDay):which(jday == eJDay)]
+
   #cat('Get LT Data\n')
-  tab.LT <- getMet(stn,as.Date('1981-01-01'),as.Date('2010-12-31'))
-  if(!is.null(tab.LT)){
-    #cat('Calc LT Chill\n')
-    LTData <- getLTCold(tab.LT,sJDay, eJDay,lat, CHILLTYPE)
+  if(!GROWER){
+    tab.LT <- getMet(stn,as.Date('1981-01-01'),as.Date('2010-12-31'))
+    if(!is.null(tab.LT)){
+      #cat('Calc LT Chill\n')
+      LTData <- getLTCold(tab.LT,sJDay, eJDay,lat, CHILLTYPE)
 
-    LTChill <- LTData$CU
-    LTHot <- LTData$CUHot
-    LTCold <- LTData$CUCold
-
-    JDays <- sJDay:eJDay
-
-    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-    nJdays <- length(JDays)
-
-    notNA <- which(!is.na(chill))
-
-    chill <- chill[notNA]
-
-    labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-
-    today <- tail(chill,1)
-
-    if(today > 0){
-      chillMessage <- paste(stnName,"Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
-    } else {
-      chillMessage <- paste(stnName,'No Chill has accumulated')
+      LTChill <- LTData$CU
+      LTHot <- LTData$CUHot
+      LTCold <- LTData$CUCold
     }
+  } else {
+    LTChill <- NULL
+    LTHot <- NULL
+    LTCold <- NULL
+  }
+  JDays <- sJDay:eJDay
 
-    #cat('create data frame theData\n')
-    cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
-    theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
-    #return(list(theData =data.frame(JDays,labs, chill,LTHot,LTCold),YLAB=YLAB,chillMessage=chillMessage))
-    b <- list(
-      title = YLAB,
-      titlefont = f1,
-      showticklabels = TRUE,
-      tickangle = 0,
-      tickfont = f1
-    )
+  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+  nJdays <- length(JDays)
 
-    #cat('do the plot\n')
-    if(CHILLTYPE != 3){
-      p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Lowest 10%',
-                   line=list(color='transparent'),showlegend = F) %>%
+  notNA <- which(!is.na(chill))
+
+  chill <- chill[notNA]
+
+  labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
+
+  today <- tail(chill,1)
+
+  if(today > 0){
+    chillMessage <- paste(stnName,"Chill Accumulated (",as.character(todayDate),"):" ,round(today,0),YLAB)
+  } else {
+    chillMessage <- paste(stnName,'No Chill has accumulated')
+  }
+
+  #cat('create data frame theData\n')
+  cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
+  theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
+  #return(list(theData =data.frame(JDays,labs, chill,LTHot,LTCold),YLAB=YLAB,chillMessage=chillMessage))
+  b <- list(
+    title = YLAB,
+    titlefont = f1,
+    showticklabels = TRUE,
+    tickangle = 0,
+    tickfont = f1
+  )
+
+  #cat('do the plot\n')
+  if(CHILLTYPE != 3){
+    p <- plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Lowest 10%',
+                 line=list(color='transparent'),showlegend = F) %>%
       add_trace(y = ~LTCold,name='Highest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
       add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
       layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
-    } else {
-      plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Lowest 10%',
-                   line=list(color='transparent'),showlegend = F)  %>%
+  } else {
+    plot_ly(theData, x = ~labs, y = ~LTHot,  type = "scatter", mode='lines',name='Lowest 10%',
+            line=list(color='transparent'),showlegend = F)  %>%
       add_trace(y = ~LTCold,name='Highest 10%',showlegend = F,fill='tonexty',fillcolor='rgba(53,118,190,0.5)') %>%
       add_trace(y = ~chill,name='This Year',showlegend = F,line=list(color='rgb(53,118,190)')) %>%
       layout(xaxis=a,yaxis=b,margin=margin,title=chillMessage)
-    }
   }
 }
+
+
+
+
 
 getTheChill <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
 

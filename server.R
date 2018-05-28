@@ -11,6 +11,41 @@ shinyServer(function(input, output, session) {
   stns <- reactiveValues()
   stns$df <- data.frame(row=numeric(0),stn=character(0))
 
+  growerData <- reactiveValues()
+  growerData$weather <- data.frame(DateTime=character(),aveTemp=numeric())
+
+  output$contents <- renderTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+    req(input$file1)
+
+    # when reading semicolon separated files,
+    # having a comma separator causes `read.csv` to error
+    tryCatch(
+      {
+        growerData$weather <- read.csv(input$file1$datapath,
+                       header = input$header,
+                       sep = ',',
+                       quote = '"')      },
+      error = function(e) {
+        # return a safeError if a parsing error occurs
+        stop(safeError(e))
+      }
+    )
+
+    if(input$disp == "head") {
+      return(head(growerData$weather))
+    }
+    else {
+      return(growerData$weather)
+    }
+
+  })
+
+
   observe({input$jscookie
     if(debug)
       print('running getcookie from observe')
@@ -81,7 +116,17 @@ shinyServer(function(input, output, session) {
     } else {
       if(debug)
         cat(stns$row,"<br/><h3>",siteInfo$Name[stns$row],"</h3>\n")
-      HTML(paste("<br/><h3>",siteInfo$Name[stns$row],"</h3>"))
+      if(is.null(input$source)){
+        source <- F
+      } else {
+        source <- input$source
+      }
+      if(source){
+        HTML(paste("<br/><h3>Grower Data</h3>"))
+      } else {
+        HTML(paste("<br/><h3>",siteInfo$Name[stns$row],"</h3>"))
+      }
+
     }
   })
 
@@ -172,41 +217,37 @@ shinyServer(function(input, output, session) {
   ### Chill Plot/ Table ###
 
     output$chillPlot <- renderPlotly({
-      if(is.null(input$isMobile )){
-        print('mobile is null')
-      }
-      if(input$isMobile){
-        print('this is a mobile device')
-      } else {
-        print('not a mobile device')
-      }
-      if ( is.null(input$startDate) | input$isMobile ) {
+      if(is.null(input$startDate) | is.null(input$endDate)){
         return(NULL)
       }
-      input$TriggerButton
+
       if(debug)
         cat('\n\n### Chill Plot ###\n')
-
-      doThePlot(input$cType,stns$row,input$startDate,input$endDate)
-    }) #renderPlot
-
-
-    output$itsAMobile <- renderTable({
-      if(is.null(input$isMobile )){
-        print('mobile is null')
+      if(is.null(input$source)){
+        print('input$source was null')
+        source <- F
+      } else {
+        print('input$source was not null')
+        cat('using',input$source,'\n')
+        source <- input$source
       }
-      if ( is.null(input$startDate) | ! input$isMobile ) {
+
+      if(debug)
+        cat(input$cType,stns$row,input$startDate,input$endDate,'source=',source,'nrow',nrow(growerData$weather),'\n',sep=',')
+      if(nrow(growerData$weather) == 0){
+        if(debug)
+          print('setting growerdataset to NULL')
+        growerdataset <- NULL
+      } else {
+        growerdataset <- growerData$weather
+      }
+      if(source & is.null(growerdataset)){
+        if(debug)
+          print('source is true and growerdataset is NULL')
         return(NULL)
       }
-      input$TriggerButton
-      if(debug)
-        cat('\n\n### Chill Plot Text ###\n')
-
-      theTable<-getTheChill(input$cType,stns$row,input$startDate,input$endDate)
-
-
-    })
-
+      doThePlot(input$cType,stns$row,input$startDate,input$endDate,source,growerdataset)
+    }) #renderPlot
 
   ### GDH Plot ###
     output$GDHPlot <- renderPlotly({

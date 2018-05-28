@@ -1,5 +1,5 @@
 
-debug <- F
+debug <- T
 
 if(debug)
   print('hello from global')
@@ -17,6 +17,7 @@ library(shinyjs)
 Sys.setenv(TZ="Australia/Brisbane")
 
 userLocationSet <- F
+
 
 siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
