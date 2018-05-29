@@ -80,23 +80,20 @@ shinyUI(
       ),
       tabPanel("Upload",
                sidebarLayout(
-
                  # Sidebar panel for inputs ----
                  sidebarPanel(
-
                    # Input: Select a file ----
                    fileInput("file1", "Choose CSV File",
                              multiple = FALSE,
                              accept = c("text/csv",
                                         "text/comma-separated-values,text/plain",
                                         ".csv")),
-
+                   #use grower input or not
+                   checkboxInput("source", "Use This Data Set for Calculations", FALSE),
                    # Horizontal line ----
                    tags$hr(),
-
                    # Input: Checkbox if file has header ----
                    checkboxInput("header", "Header", TRUE),
-
                    # Input: Select separator ----
                    radioButtons("sep", "Separator",
                                 choices = c(Comma = ",",
@@ -105,26 +102,17 @@ shinyUI(
                                 selected = ","),
                    # Horizontal line ----
                    tags$hr(),
-
                    # Input: Select number of rows to display ----
                    radioButtons("disp", "Display",
                                 choices = c(Head = "head",
                                             All = "all"),
-                                selected = "head"),
-
-                   #use grower input or not
-                   checkboxInput("source", "Use This Data for calculations", FALSE)
-
+                                selected = "head")
                  ),
-
                  # Main panel for displaying outputs ----
                  mainPanel(
-
                    # Output: Data file ----
                    tableOutput("contents")
-
                  )
-
                )
       ),
       tabPanel("Locations", value='Locations',busyIndicator("Calculation In progress",wait = 0),

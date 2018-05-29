@@ -1,5 +1,5 @@
 
-debug <- T
+debug <- F
 
 if(debug)
   print('hello from global')
@@ -11,6 +11,7 @@ library(shinysky)
 library(V8)
 library(leaflet)
 library(shinyjs)
+library(datetime)
 
 # arm online #4E7707
 #franchise blue #007EB1

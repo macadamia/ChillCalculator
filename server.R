@@ -29,7 +29,8 @@ shinyServer(function(input, output, session) {
         growerData$weather <- read.csv(input$file1$datapath,
                        header = input$header,
                        sep = ',',
-                       quote = '"')      },
+                       quote = '"',
+                       stringsAsFactors = F)      },
       error = function(e) {
         # return a safeError if a parsing error occurs
         stop(safeError(e))
@@ -122,7 +123,7 @@ shinyServer(function(input, output, session) {
         source <- input$source
       }
       if(source){
-        HTML(paste("<br/><h3>Grower Data</h3>"))
+        HTML(paste("<br/><h3>",input$file1$name,"</h3>"))
       } else {
         HTML(paste("<br/><h3>",siteInfo$Name[stns$row],"</h3>"))
       }

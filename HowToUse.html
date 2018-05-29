@@ -6,9 +6,35 @@
 
 <p>All calculations are performed using the chillR package of Luedeling et al. (2013) & Luedeling (2017).</p>
 
+<h3>Uploading Your Own Data</h3>
+Datasets downloaded from your weather station need to converted to a uniform format. At present the web site can only handle data in the following format and only for calculations of chill.
+
+<table>
+  <tr>
+    <th>DateTime (dd/mm/yy hh:mm)  </th><th>Temperature</th>
+  </tr>
+  <tr>
+    <td>1/5/18 00:00</td> <td>12.1</td>
+  </tr>
+    <tr>
+    <td>1/5/18 01:00</td> <td>12.0</td>
+  </tr>
+    <tr>
+    <td>1/5/18 02:00</td> <td>11.7</td>
+  </tr>
+</table>
+
+<p>The names of the header columns are not important, however, the data <b>must</b> be in that format and order. There is very little error checking undertaken at this stage.</p>
+
+<p>Hours can be 0 to 23 or 1 to 24, i.e. midnight can either be hour 0 or hour 24.</p>
+
+<p>Use the checkbox <i>Use This Data Set for Calculations</i> to toggle between your data and the active site.</p>
+
+<b>Note:</b> Your data is not stored on the server and is destroyed when you end the session.
+
 <h3>Selecting Locations</h3>
 
-Locations are selected from the <i>Locations</i> tab by clicking the blue marker for that location on the map. Once a location has been selected, it will appear on the top left hand side of the screen. There are a number of ways to locate the blue marker you’re interested in:
+Locations are selected from the <i>Locations</i> tab by clicking the blue marker for that location on the map. Once a location has been selected, it will appear on the top left hand side of the screen. There are a number of ways to locate the blue marker you are interested in:
 <ol>
 <li>Select a growing region and wait for the map to identify the locations available for that region.</li>
 <li>Search for a weather station and select from the list of responses.</li>

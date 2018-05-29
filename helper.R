@@ -8,7 +8,7 @@ TheAPIKey <- readRDS('Data/WillyWeather.rds')
 token <- readRDS('Data/droptokenchillcalc.rds')
 #drop_acc(dtoken=token)
 
-
+library(datetime)
 if(!useAPSIM){
   longPaddock <- readRDS('Data/LongPaddock.rds')
   library(RCurl)
@@ -45,7 +45,7 @@ siteInfo <- siteInfo[-cleanup,]
 siteInfo[,'NamePerc'] <- paste(siteInfo$Name,' ',formatC((siteInfo$PercMaxTObs+siteInfo$PercMinTObs)/2*100,format='f',digits=1),'%',sep='')
 
 cols<-c('Year','JDay','Tmax','TMin')
-hours<-paste('Hour',seq(1,24),sep='_')
+hours<-paste('Hour',seq(0,23),sep='_')
 cols<-c(cols,hours)
 
 f1 <- list(
@@ -110,7 +110,7 @@ makeHourly<-function(tmp){
   #convert to mean hourly
   weather<-tapply(tmp$Tav,list(hours,theDate),mean)
   temperature<-as.vector(weather)
-  hour<-rep(seq(1,24),dim(weather)[2])
+  hour<-rep(seq(0,23),dim(weather)[2])
   dateList<-colnames(weather)
   year<-as.numeric(strftime(as.Date(dateList,'%d/%m/%Y'),'%Y'))
   jday<-as.numeric(strftime(as.Date(dateList,'%d/%m/%Y'),'%j'))
@@ -232,7 +232,7 @@ getMet<-function(stn,startDate,endDate){
     }
     save(tab.1,file=fName) # per session
     #store to dropbox
-    drop_upload(fName, dest = 'ChillCalcStore', dtoken = token, verbose = F)
+    drop_upload(fName, path = 'ChillCalcStore', dtoken = token, verbose = F)
     cat('Uploaded',fName,'to Dropbox ChillCalcStore\n')
   } #!fileFound | (fileFound & !goodToGo))
   return(result)
@@ -308,17 +308,17 @@ getLTCold <- function(tab.LT,sJDay,eJDay, lat, CHILLTYPE){
   #get chill and heating info
   ch<-chilling_hourtable(stack,sJDay)
   Hour <- ch$Hour
-  JDay <- ch$JDay[Hour == 24]
-  Year <- ch$Year[Hour == 24]
+  JDay <- ch$JDay[Hour == 23]
+  Year <- ch$Year[Hour == 23]
   if(CHILLTYPE == 1){
-    cold <- ch$Chill_Portions[Hour == 24]
+    cold <- ch$Chill_Portions[Hour == 23]
 
   }
   if(CHILLTYPE == 2){
-    cold <- ch$Chilling_Hours[Hour == 24]
+    cold <- ch$Chilling_Hours[Hour == 23]
   }
   if(CHILLTYPE == 3){
-    cold <- ch$Chill_Units[Hour == 24]
+    cold <- ch$Chill_Units[Hour == 23]
   }
 
   cold.tab <- tapply(cold,list(Year,JDay),mean)[,sJDay:eJDay]
@@ -384,12 +384,12 @@ getLTGDH<-function(stn,lat,startDate,endDate,metOnly){ #long-term data for GDH
           theDates <- seq.Date(as.Date(paste(yr,sJDay,sep='-'),'%Y-%j'),as.Date(paste(yr+nYrs,eJDay,sep='-'),'%Y-%j'),'days')
           leapdayIndex <- grep("02-29",as.character(theDates))
           if(length(leapdayIndex) > 0 ) {
-            gdh <- results$gdh[hours==24][-leapdayIndex]
+            gdh <- results$gdh[hours==23][-leapdayIndex]
           } else {
-            gdh <- results$gdh[hours==24]
+            gdh <- results$gdh[hours==23]
           }
         } else {
-          gdh <- results$gdh[hours==24]
+          gdh <- results$gdh[hours==23]
         }
         newGDH[yr-1980,1:length(gdh)] <- gdh
       }
@@ -439,16 +439,21 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
-calcChillGrower <- function(grower,sJDay,eJDay,CHILLTYPE){
+calcChillGrower <- function(growerData,sJDay,eJDay,CHILLTYPE){
   if(debug)
     print('calcChillGrower')
   if(debug){
-    print(dim(grower))
+    print(dim(growerData))
   }
   #create the stack
-  stack <- data.frame(Year=as.numeric(format(growerData$weather[,1],'%Y')),
-    JDay=as.numeric(format(growerData$weather[,1],'%j')),
-    Temp=growerData$weather[,2])
+  theHours <- as.numeric(format(growerData[,1],'%H'))
+  if(min(theHours) == 1 & max(theHours) == 24){
+    theHours <- theHours - 1
+  }
+  stack <- data.frame(Year=as.numeric(format(growerData[,1],'%y')),
+    JDay=as.numeric(format(growerData[,1],'%j')),
+    Hour=theHours,
+    Temp=growerData[,2])
   # This data frame must have a column for Year, a column for JDay (Julian date, or day of the year),
   # a column for Hour and a column for Temp (hourly temperature).
 
@@ -473,7 +478,6 @@ calcChillGrower <- function(grower,sJDay,eJDay,CHILLTYPE){
   }
 
   maxChill<-round(max(chill),1)
-
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
@@ -528,12 +532,13 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
   if(GROWER & !is.null(GROWERDATA)){
 
     #we are using grower hourly data
-    localData <- data.frame(dateTime=as.Date(GROWERDATA[,1],'%d/%m/%y %H:%M:%S'),theTemp=GROWERDATA[,2])
-    expectedEndJDay <- as.numeric(format(tail(localData$dateTime,1),'%j'))
+    localData <- data.frame(dateTime=as.datetime(GROWERDATA[,1],'%d/%m/%y %H:%M'),theTemp=GROWERDATA[,2])
     STARTDATE <- head(localData$dateTime,1)
     EDATE <- tail(localData$dateTime,1)
     if(debug){
       print('Grower data')
+      print(head(GROWERDATA))
+      print(head(localData))
       print(head(localData$dateTime,1))
       print(head(localData))
     }
@@ -553,12 +558,7 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
     #print('Update the end year from previous multiyear')
     eJDay <- as.numeric(format(EDATE,'%j'))
     EDATE <- as.Date(paste(sYear,eJDay,'sep=-'),'%Y-%j')
-    #now update the display
-
   }
-
-  #cat(as.character(STARTDATE),' ',as.character(EDATE),'\n')
-
   Year <- as.numeric(format(STARTDATE,'%Y'))
   sJDay <- as.numeric(format(STARTDATE,'%j'))
   eJDay <- as.numeric(format(EDATE,'%j'))
@@ -592,13 +592,14 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
       res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
     }
   } else {
-    res <- calcChillGrower(tab.1,sJDay,eJDay,CHILLTYPE)
+    res <- calcChillGrower(localData,sJDay,eJDay,CHILLTYPE)
   }
+
   chill <- res$chill
   maxChill <- res$maxChill
   jday <- res$jday
   hours <- res$hours
-  hour24 <- which(hours==24)
+  hour24 <- which(hours == 23)
 
   jday <- jday[hour24]
   chill <- chill[hour24]
@@ -612,9 +613,10 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
     print(as.character(actualEndDate))
 
   }
-  print(jday)
-  print(eJDay)
+
   chill <- chill[which(jday == sJDay):which(jday == eJDay)]
+  JDays <- sJDay:eJDay
+  nJdays <- length(JDays)
 
   #cat('Get LT Data\n')
   if(!GROWER){
@@ -628,14 +630,14 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
       LTCold <- LTData$CUCold
     }
   } else {
-    LTChill <- NULL
-    LTHot <- NULL
-    LTCold <- NULL
+    LTChill <- rep(NA,nJdays)
+    LTHot <- rep(NA,nJdays)
+    LTCold <- rep(NA,nJdays)
   }
-  JDays <- sJDay:eJDay
+
 
   labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-  nJdays <- length(JDays)
+
 
   notNA <- which(!is.na(chill))
 
@@ -652,7 +654,8 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
   }
 
   #cat('create data frame theData\n')
-  cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'\n')
+  if(debug)
+    cat('JDays',length(JDays),'labs',length(labs),'chill',length(chill),'LTHot',length(LTHot),'LTCold',length(LTCold),'\n')
   theData <- data.frame(JDays,labs, chill,LTHot,LTCold)
   #return(list(theData =data.frame(JDays,labs, chill,LTHot,LTCold),YLAB=YLAB,chillMessage=chillMessage))
   b <- list(
@@ -732,7 +735,7 @@ getTheChill <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE){
     maxChill <- res$maxChill
     jday <- res$jday
     hours <- res$hours
-    hour24 <- which(hours==24)
+    hour24 <- which(hours==23)
 
     jday <- jday[hour24]
     chill <- chill[hour24]
@@ -822,7 +825,7 @@ doTheHeatPlot <- function(YEAR,GTYPE,SDATE,EDATE,LOCATION,BASETEMP){
       maxGD <- res$maxGDH
       jday <- res$jday
       hours <- res$hours
-      hour24 <- which(hours==24)
+      hour24 <- which(hours==23)
 
       jday <- jday[hour24]
       gdh <- gdh[hour24]
