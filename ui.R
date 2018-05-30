@@ -90,16 +90,21 @@ shinyUI(
                                         ".csv")),
                    #use grower input or not
                    checkboxInput("source", "Use This Data Set for Calculations", FALSE),
-                   # Horizontal line ----
-                   tags$hr(),
                    # Input: Checkbox if file has header ----
-                   checkboxInput("header", "Header", TRUE),
-                   # Input: Select separator ----
-                   radioButtons("sep", "Separator",
-                                choices = c(Comma = ",",
-                                            Semicolon = ";",
-                                            Tab = "\t"),
-                                selected = ","),
+                   checkboxInput("header", "My Data Has a Header", TRUE),
+                   # # Input: Select separator ----
+                   # radioButtons("sep", "Separator",
+                   #              choices = c(Comma = ",",
+                   #                          Semicolon = ";",
+                   #                          Tab = "\t"),
+                   #              selected = ","),
+                   #Date format
+                   radioButtons("dateformat", "Date Format",
+                                choices = c("dd/mm/yyyy hh:mm" = "%d/%m/%Y %H:%M",
+                                            "dd/mm/yy hh:mm" = "%d/%m/%y %H:%M",
+                                            "dd-mm-yyyy hh:mm" = "%d-%m-%Y %H:%M",
+                                            "dd-mm-yy hh:mm" = "%d-%m-%y %H:%M"),
+                                selected = "%d/%m/%Y %H:%M"),
                    # Horizontal line ----
                    tags$hr(),
                    # Input: Select number of rows to display ----
@@ -146,7 +151,6 @@ shinyUI(
           ),#fluidRow
 
           fluidRow(
-            tableOutput('itsAMobile'),
             plotlyOutput("chillPlot")
           )
 

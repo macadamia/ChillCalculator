@@ -399,24 +399,40 @@ getLTGDH<-function(stn,lat,startDate,endDate,metOnly){ #long-term data for GDH
 }
 
 
-calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
+calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE,SOURCE){
   if(debug)
     print('calcChill')
   if(debug){
     print(dim(tab.1))
   }
-  year <- tab.1[,1]
-  day <- tab.1[ ,2]
-  maxt <- tab.1[,4]
-  mint <- tab.1[,5]
 
-  chillWeather<-data.frame(year,day,maxt,mint)
-  colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
-  THourly<-make_hourly_temps(lat,chillWeather)
-  stack<-stack_hourly_temps(hour_file=THourly)
+  if(!SOURCE){
+    year <- tab.1[,1]
+    day <- tab.1[ ,2]
+    maxt <- tab.1[,4]
+    mint <- tab.1[,5]
+
+    chillWeather<-data.frame(year,day,maxt,mint)
+    colnames(chillWeather)<-c('Year','JDay','Tmax','Tmin')
+    THourly<-make_hourly_temps(lat,chillWeather)
+    stack<-stack_hourly_temps(hour_file=THourly)
+  } else {
+    #Grower data
+    print('Grower data head')
+    print(head(tab.1))
+    theHours <- as.numeric(format(tab.1[,1],'%H'))
+    if(min(theHours) == 1 & max(theHours) == 24){
+      theHours <- theHours - 1
+    }
+    # This data frame must have a column for Year, a column for JDay (Julian date, or day of the year),
+    # a column for Hour and a column for Temp (hourly temperature).
+    stack <- data.frame(Year=as.numeric(format(tab.1[,1],'%Y')),
+                        JDay=as.numeric(format(tab.1[,1],'%j')),
+                        Hour=theHours,
+                        Temp=tab.1[,2])
+  }
   #get chill and heating info
   ch<-chilling_hourtable(stack,sJDay)
-
 
   if(CHILLTYPE == 1){
     chill<-ch$Chill_Portions
@@ -433,51 +449,8 @@ calcChill <- function(tab.1,lat,sJDay,eJDay,CHILLTYPE){
     chill<-ch$Chill_Units[these]
     units<-'Utah Chill Units'
   }
-
   maxChill<-round(max(chill),1)
 
-  return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
-}
-
-calcChillGrower <- function(growerData,sJDay,eJDay,CHILLTYPE){
-  if(debug)
-    print('calcChillGrower')
-  if(debug){
-    print(dim(growerData))
-  }
-  #create the stack
-  theHours <- as.numeric(format(growerData[,1],'%H'))
-  if(min(theHours) == 1 & max(theHours) == 24){
-    theHours <- theHours - 1
-  }
-  stack <- data.frame(Year=as.numeric(format(growerData[,1],'%y')),
-    JDay=as.numeric(format(growerData[,1],'%j')),
-    Hour=theHours,
-    Temp=growerData[,2])
-  # This data frame must have a column for Year, a column for JDay (Julian date, or day of the year),
-  # a column for Hour and a column for Temp (hourly temperature).
-
-  #get chill and heating info
-  ch<-chilling_hourtable(stack,sJDay)
-
-
-  if(CHILLTYPE == 1){
-    chill<-ch$Chill_Portions
-    units<-'Chill Portions'
-    these<-1:length(ch$JDay)
-  }
-  if(CHILLTYPE == 2){
-    chill<-ch$Chilling_Hours
-    units<-'Chiling Hours < 7.2ºC'
-    these<-1:length(ch$JDay)
-  }
-  if(CHILLTYPE == 3){
-    these<-which(ch$JDay >= sJDay & ch$JDay <= eJDay)
-    chill<-ch$Chill_Units[these]
-    units<-'Utah Chill Units'
-  }
-
-  maxChill<-round(max(chill),1)
   return(list(chill=chill,units=units,maxChill=maxChill,jday=ch$JDay[these],hours=ch$Hour[these]))
 }
 
@@ -510,46 +483,43 @@ calcHeat <- function(tab.met,lat,sJDay){
 
 #doThePlot(input$yearInput,input$cType,site$currentLoc,input$startDate)
 doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
-
+  if(debug)
+    print('entering doThePlot')
   # YEAR<-2018
   # CHILLTYPE<-1
   # LOCATION<-317
   # STARTDATE<-as.Date('2018-3-1')
   # EDATE<-as.Date('2018-5-3')
   #
-  # print(CHILLTYPE)
-  # print(LOCATION)
-  # print(STARTDATE)
-  # print(EDATE)
+  print(CHILLTYPE)
+  print(LOCATION)
+  print(STARTDATE)
+  print(EDATE)
 
   if(debug & GROWER){
     print('we have grower data')
     print(head(GROWERDATA))
-  } else {
+  }
+  if(debug & !GROWER){
     print("SILO data")
   }
 
-  if(GROWER & !is.null(GROWERDATA)){
-
-    #we are using grower hourly data
-    localData <- data.frame(dateTime=as.datetime(GROWERDATA[,1],'%d/%m/%y %H:%M'),theTemp=GROWERDATA[,2])
-    STARTDATE <- head(localData$dateTime,1)
-    EDATE <- tail(localData$dateTime,1)
-    if(debug){
-      print('Grower data')
-      print(head(GROWERDATA))
-      print(head(localData))
-      print(head(localData$dateTime,1))
-      print(head(localData))
-    }
-  }
+  # if(GROWER & !is.null(GROWERDATA)){
+  #
+  #   #we are using grower hourly data
+  #   #localData <- data.frame(dateTime=as.datetime(GROWERDATA[,1],'%d/%m/%y %H:%M'),theTemp=GROWERDATA[,2])
+  #   # STARTDATE <- head(GROWERDATA$dateTime,1)
+  #   # EDATE <- tail(GROWERDATA$dateTime,1)
+  #   if(debug){
+  #     print('Grower data')
+  #     print(head(GROWERDATA))
+  #     print(head(GROWERDATA$dateTime,1))
+  #   }
+  # }
   if(debug){
-    cat(STARTDATE,EDATE,'\n')
+    cat('Time Period:',as.character(STARTDATE),as.character(EDATE),'\n')
   }
   expectedEndJDay <- as.numeric(format(EDATE,'%j'))
-
-  if(debug)
-    print('doThePlot')
 
   #need to check the year in case we did a GD with across the years
   sYear <- as.numeric(format(STARTDATE,'%Y'))
@@ -582,38 +552,48 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
     lat<-siteInfo$latitude[LOCATION]
     stnName<-siteInfo$Name[LOCATION]
   }
-
-
+  if(debug)
+    cat('args before calcChill',sJDay,eJDay,CHILLTYPE,GROWER,'\n')
   if(!GROWER){
     tab.1<-getMet(stn,STARTDATE,EDATE)
     if(!is.null(tab.1)){
       if(debug)
         cat('Got met, now calc chill for',Year,'\n')
-      res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE)
+      res <- calcChill(tab.1,lat,sJDay,eJDay,CHILLTYPE,GROWER)
     }
   } else {
-    res <- calcChillGrower(localData,sJDay,eJDay,CHILLTYPE)
+    res <- calcChill(GROWERDATA,lat,sJDay,eJDay,CHILLTYPE,GROWER)
   }
+  if(debug)
+    cat('args after calcChill',sJDay,eJDay,CHILLTYPE,GROWER,'\n')
 
   chill <- res$chill
   maxChill <- res$maxChill
   jday <- res$jday
   hours <- res$hours
+
+  print('range hours')
+  print(range(hours))
+  print(length(hours))
   hour24 <- which(hours == 23)
+  print(length(hour24))
 
   jday <- jday[hour24]
   chill <- chill[hour24]
 
-  #does eJDay == tail(jday,1)
   todayDate <- format(EDATE,'%d %b %Y')
-  if( eJDay != tail(jday,1) ){
-    eJDay <- tail(jday,1)
-    actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j') # not sure what to do with that
-    todayDate <- format(actualEndDate,'%d %b %Y')
-    print(as.character(actualEndDate))
-
+  #does eJDay == tail(jday,1)
+  if(!GROWER){ # adjusts for lag in SILO data
+    if( eJDay - tail(jday,1) != 0 ){
+      eJDay <- tail(jday,1)
+      actualEndDate <- as.Date(paste(eYear,eJDay,sep='-'),'%Y-%j')
+      todayDate <- format(actualEndDate,'%d %b %Y')
+      if(debug)
+        cat('eJDay != tail(jday,1)',as.character(actualEndDate),eJDay,tail(jday,1),eJDay-tail(jday,1),'\n')
+    }
   }
-
+  if(debug)
+    cat('Time Period (jdays):',sJDay,eJDay,'\n')
   chill <- chill[which(jday == sJDay):which(jday == eJDay)]
   JDays <- sJDay:eJDay
   nJdays <- length(JDays)
@@ -635,9 +615,8 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
     LTCold <- rep(NA,nJdays)
   }
 
-
+  print(JDays)
   labs<-as.Date(paste(Year,JDays,sep='-'),'%Y-%j')
-
 
   notNA <- which(!is.na(chill))
 

@@ -1,5 +1,5 @@
 
-debug <- F
+debug <- T
 
 if(debug)
   print('hello from global')

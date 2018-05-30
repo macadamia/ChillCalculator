@@ -13,6 +13,7 @@ shinyServer(function(input, output, session) {
 
   growerData <- reactiveValues()
   growerData$weather <- data.frame(DateTime=character(),aveTemp=numeric())
+  growerData$years <- as.numeric(format(Sys.Date(), "%Y"))
 
   output$contents <- renderTable({
 
@@ -26,7 +27,7 @@ shinyServer(function(input, output, session) {
     # having a comma separator causes `read.csv` to error
     tryCatch(
       {
-        growerData$weather <- read.csv(input$file1$datapath,
+        localData <- read.csv(input$file1$datapath,
                        header = input$header,
                        sep = ',',
                        quote = '"',
@@ -37,11 +38,15 @@ shinyServer(function(input, output, session) {
       }
     )
 
+    growerData$weather <- data.frame(dateTime=as.datetime(localData[,1],input$dateformat),theTemp=localData[,2])
+    growerData$years <- sort(unique(as.numeric(format(growerData$weather$dateTime,'%Y'))))
+    growerData$lastDate <- tail(growerData$weather$dateTime,1)
+
     if(input$disp == "head") {
-      return(head(growerData$weather))
+      return(head(localData)) # return this because it needs to be formatted as the user had it.
     }
     else {
-      return(growerData$weather)
+      return(localData)
     }
 
   })
@@ -72,9 +77,13 @@ shinyServer(function(input, output, session) {
   stns$stn <- siteInfo$stnID
 }) ## cookie stuff
 
-  currentYear <- as.numeric(format(Sys.Date(), "%Y"))# just used to update the Year drop down
+  # used to update the Year drop down
+
+  currentYear <- as.numeric(format(Sys.Date(), "%Y"))#
 
   selectedYear <-  reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
+
+  selectedGrowerYear <-  reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
 
   results <- reactive({
     searchForLocation(input$Location)
@@ -109,8 +118,6 @@ shinyServer(function(input, output, session) {
     )
   )
 
-
-
   output$SelectedLocation <- renderUI({
     if(is.null(stns)){
       return(NULL)
@@ -132,10 +139,15 @@ shinyServer(function(input, output, session) {
   })
 
 
-
   output$yearOutput <- renderUI({
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year) #currentYear
+      if(input$source){
+        syear <- head(growerData$years,1)
+        eyear <- tail(growerData$years,1)
+        selectInput('yearInput',h4('Year'),as.character(seq(syear,eyear,-1)), selectedYear$Year)
+      } else {
+        selectInput('yearInput',h4('Year'),as.character(seq(currentYear,1968,-1)), selectedYear$Year)
+      }
     }
   })
 
@@ -168,7 +180,11 @@ shinyServer(function(input, output, session) {
     if (is.null(input$yearInput)) {
       return(NULL)
     }
-    selectedYear$Year <- input$yearInput
+    if(input$source){
+      selectedYear$Year <- growerData$years[1]
+    } else {
+      selectedYear$Year <- input$yearInput
+    }
 
     if(input$tabs == 'Chill'){
       if(input$cType == 3){
@@ -187,7 +203,7 @@ shinyServer(function(input, output, session) {
     }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1)
+      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1,autoclose=T)
     }
   })
 
@@ -195,16 +211,27 @@ shinyServer(function(input, output, session) {
     if(is.null(input$yearInput)){
       return(NULL)
     }
-    selectedYear$Year <- input$yearInput
+    if(input$source){
+      selectedYear$Year <- growerData$years[1]
+      cat('Last date',growerData$lastDate,'\n')
+      maxValue <- v1 <- format(growerData$lastDate,'%Y-%m-%d')
+      cat('Source supplied maxValue is ',maxValue,'\n')
+    } else {
+      selectedYear$Year <- input$yearInput
+      maxValue <- checkDateEnd(as.character(Sys.Date()-1))
+      v1 <- checkDateEnd(as.character(Sys.Date()))
+    }
 
-    maxValue <- checkDateEnd(as.character(Sys.Date()-1))
+    if(debug){
+      print(v1)
+    }
     if( input$tabs == 'Growing Degrees'){
       maxValue = NULL
     }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      dateInput("endDate", label = h4("End Date"), value = checkDateEnd(as.character(Sys.Date())),
-                min = paste(selectedYear$Year,"-01-01",sep=''), max = maxValue)
+      dateInput("endDate", label = h4("End Date"), value = v1,
+                min = paste(selectedYear$Year,"-01-01",sep=''), max = maxValue,autoclose=T)
     }
   })
 
@@ -218,7 +245,7 @@ shinyServer(function(input, output, session) {
   ### Chill Plot/ Table ###
 
     output$chillPlot <- renderPlotly({
-      if(is.null(input$startDate) | is.null(input$endDate)){
+      if( (is.null(input$startDate) | is.null(input$endDate) | is.null(input$yearInput)  ) ) {
         return(NULL)
       }
 
@@ -232,22 +259,15 @@ shinyServer(function(input, output, session) {
         cat('using',input$source,'\n')
         source <- input$source
       }
-
-      if(debug)
-        cat(input$cType,stns$row,input$startDate,input$endDate,'source=',source,'nrow',nrow(growerData$weather),'\n',sep=',')
-      if(nrow(growerData$weather) == 0){
+      if(source &  nrow(growerData$weather)==0 ){
         if(debug)
-          print('setting growerdataset to NULL')
-        growerdataset <- NULL
-      } else {
-        growerdataset <- growerData$weather
-      }
-      if(source & is.null(growerdataset)){
-        if(debug)
-          print('source is true and growerdataset is NULL')
+          print('source is true and growerdataset is empty')
+        showNotification("The data file is empty",closeButton = T)
         return(NULL)
       }
-      doThePlot(input$cType,stns$row,input$startDate,input$endDate,source,growerdataset)
+      if(debug)
+        cat('args for doThePlot',input$cType,stns$row,as.character(input$startDate),as.character(input$endDate),'source=',source,'nrow',nrow(growerData$weather),'\n',sep=',')
+      doThePlot(input$cType,stns$row,input$startDate,input$endDate,source,growerData$weather)
     }) #renderPlot
 
   ### GDH Plot ###
@@ -266,8 +286,6 @@ shinyServer(function(input, output, session) {
 
     }) #renderPlot
 
-
-
   #observe({
     output$TempPlot <- renderPlotly({
       if (is.null(input$startDate) | is.null(input$endDate) ) {
@@ -275,10 +293,6 @@ shinyServer(function(input, output, session) {
       }
       if(debug)
         print('### Temperature Plot ###')
-      # if(is.na(stns)){
-      #   startStnRowID <- startStn
-      # }
-      #loadTheData(stns$df[1,1])
       doTheTempPlot(selectedYear$Year,input$startDate,input$endDate,stns$row) # selectedYear$Year
     })
   #})
