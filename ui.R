@@ -75,7 +75,7 @@ shinyUI(
       tabPanel("Introduction",
         includeHTML('Introduction.html')
       ),
-      tabPanel("How To Use This Site",
+      tabPanel("Instructions",
         includeHTML('HowToUse.html')
       ),
       tabPanel("Upload",
@@ -110,6 +110,7 @@ shinyUI(
                    # Input: Select number of rows to display ----
                    radioButtons("disp", "Display",
                                 choices = c(Head = "head",
+                                            Tail = "tail",
                                             All = "all"),
                                 selected = "head")
                  ),
@@ -202,9 +203,9 @@ shinyUI(
              helpText('Based on or contains data provided by the State of Queensland (Department of Science, Information Technology and Innovation) [2016]. In consideration of the State permitting use of this data you acknowledge and agree that the State gives no warranty in relation to the data (including accuracy, reliability, completeness, currency or suitability) and accepts no liability (including without limitation, liability in negligence) for any loss, damage or costs (including consequential damage) relating to any use of the data. Data must not be used in breach of the privacy laws.'),
              hr(),
              helpText("If you would like further information please contact: "),
-             HTML("<a href=mailto:heidi.parkes@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Heidi Parkes, Qld Dept. of Agriculture and Fisheries</a>"),
+             HTML("<a href=mailto:heidi.parkes@daf.qld.gov.au?subject=Chill%20Calculator>Dr Heidi Parkes, Qld Dept. of Agriculture and Fisheries</a>"),
              helpText("For Technical issues: "),
-             HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Phenology%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>"),
+             HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Chill%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>"),
              helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2017.")
       ),
   tabPanel("News",

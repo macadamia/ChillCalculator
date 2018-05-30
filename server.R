@@ -6,6 +6,7 @@ library(leaflet)
 library(plotly)
 library(rdrop2)
 
+
 shinyServer(function(input, output, session) {
 
   stns <- reactiveValues()
@@ -17,6 +18,8 @@ shinyServer(function(input, output, session) {
 
   output$contents <- renderTable({
 
+    if(debug)
+      print('in output$contents')
     # input$file1 will be NULL initially. After the user selects
     # and uploads a file, head of that data file by default,
     # or all rows if selected, will be shown.
@@ -31,19 +34,79 @@ shinyServer(function(input, output, session) {
                        header = input$header,
                        sep = ',',
                        quote = '"',
-                       stringsAsFactors = F)      },
+                       stringsAsFactors = F)     },
       error = function(e) {
         # return a safeError if a parsing error occurs
         stop(safeError(e))
       }
     )
+    #check for NA is localData
+    if(any(is.na(localData))){
+      #assume it's dangling rows
+      NAs <- which(is.na(localData[,2]))
+      if(all(diff(NAs) == 1)){
+        #they are sequential
+        if(debug)
+          cat('removing',length(NAs),'dangling data\n')
+        localData <- localData[-NAs,]
+        showNotification(paste('Removed',length(NAs),'of dangling rows'),type='message')
+      } else {
+        showNotification(('I suspect you have missing data'))
+        localData <- localData[-NAs,]
+      }
+    }
 
+    tempData <- data.frame(dateTime=as.datetime(localData[,1],input$dateformat),theTemp=localData[,2])
+
+    #check for incomplete data,
+    #get max Hour, so we know what we are dealing with
+    hoursInData <- as.numeric(format(tempData[,1],'%H'))
+    maxHourInData <- max(hoursInData)
+    if(tail(hoursInData,1) != maxHourInData){
+      #need to search back for last maxHourInData
+      lastMaxHour <- max(which(hoursInData == maxHourInData))
+      dropThese <- seq((lastMaxHour+1),length(hoursInData))
+      localData <- localData[-dropThese,]
+      showNotification(paste('Removed',length(dropThese),'incomplete rows'),type='message')
+    }
+
+    if(debug)
+      print(input$dateformat)
     growerData$weather <- data.frame(dateTime=as.datetime(localData[,1],input$dateformat),theTemp=localData[,2])
-    growerData$years <- sort(unique(as.numeric(format(growerData$weather$dateTime,'%Y'))))
-    growerData$lastDate <- tail(growerData$weather$dateTime,1)
 
+    testFmt <- '%Y'
+    testValue <- as.numeric(format(growerData$weather[1,1],testFmt))
+    cat(as.character(growerData$weather[1,1]),'Using testFmt', testFmt,'Result is',testValue,'\n')
+    if(is.na(testValue)){
+      cat('showing notification due to NA\n')
+      showNotification(('I suspect you have used the wrong data format'),type='warning',id='WrongFmt')
+    } else {
+      if( testValue < 1000){
+        cat('showing notification due to small value < 1000\n')
+        showNotification(('I suspect you have used the wrong data format'),type='warning',id='WrongFmt')
+      } else {
+        cat('removing notification\n')
+        removeNotification(id='WrongFmt')
+      }
+    }
+
+    growerData$years <- sort(unique(as.numeric(format(growerData$weather$dateTime,'%Y'))))
+    if(length(growerData$years) != 1){
+      showNotification(('More than 1 year in the data'),type='error',id='TooManyYears')
+      return(NULL)
+    } else {
+      cat('removing notification\n')
+      removeNotification(id='TooManyYears')
+    }
+
+    cat('growerData$years',growerData$years,'\n')
+    growerData$lastDate <- tail(growerData$weather$dateTime,1)
+    cat('growerData$lastDate',growerData$lastDate,'\n')
     if(input$disp == "head") {
-      return(head(localData)) # return this because it needs to be formatted as the user had it.
+      return(head(localData,10)) # return this because it needs to be formatted as the user had it.
+    }
+    else if(input$disp == "tail") {
+      return(tail(localData,10)) # return this because it needs to be formatted as the user had it.
     }
     else {
       return(localData)
@@ -83,8 +146,6 @@ shinyServer(function(input, output, session) {
 
   selectedYear <-  reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
 
-  selectedGrowerYear <-  reactiveValues(Year=as.numeric(format(Sys.Date(), "%Y")))
-
   results <- reactive({
     searchForLocation(input$Location)
   })
@@ -122,17 +183,19 @@ shinyServer(function(input, output, session) {
     if(is.null(stns)){
       return(NULL)
     } else {
-      if(debug)
-        cat(stns$row,"<br/><h3>",siteInfo$Name[stns$row],"</h3>\n")
       if(is.null(input$source)){
         source <- F
       } else {
         source <- input$source
       }
       if(source){
-        HTML(paste("<br/><h3>",input$file1$name,"</h3>"))
+        if(debug)
+          cat(stns$row,"<br/><h3>",input$file1$name,"</h3>\n")
+        HTML(paste("<h3>",input$file1$name,"</h3>"))
       } else {
-        HTML(paste("<br/><h3>",siteInfo$Name[stns$row],"</h3>"))
+        if(debug)
+          cat(stns$row,"<br/><h3>",siteInfo$Name[stns$row],"</h3>\n")
+        HTML(paste("<h3>",siteInfo$Name[stns$row],"</h3>"))
       }
 
     }
@@ -180,7 +243,11 @@ shinyServer(function(input, output, session) {
     if (is.null(input$yearInput)) {
       return(NULL)
     }
+    if(debug)
+      print('In  output$dateStart')
     if(input$source){
+      if(debug)
+        cat('growerData$years[1]',growerData$years[1],'\n')
       selectedYear$Year <- growerData$years[1]
     } else {
       selectedYear$Year <- input$yearInput
@@ -201,9 +268,17 @@ shinyServer(function(input, output, session) {
     if(input$tabs == 'Temperature'){
       value1 = checkDate(paste(selectedYear$Year,"-01-01",sep=''))
     }
+    if(input$source){
+      print('lastDate')
+      print(growerData$lastDate)
+      value2 <- format(growerData$lastDate,'%Y-%m-%d')
+    } else {
+      value2 <- Sys.Date() - 1
+    }
 
     if(input$tabs == 'Chill' | input$tabs == 'Growing Degrees' | input$tabs == 'Temperature'){
-      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  Sys.Date() - 1,autoclose=T)
+      cat('value2',value2,'\n')
+      dateInput("startDate", label = h4("Start Date"), value = value1, min = paste(selectedYear$Year,"-01-01",sep=''), max =  value2, autoclose=T)
     }
   })
 
@@ -245,7 +320,9 @@ shinyServer(function(input, output, session) {
   ### Chill Plot/ Table ###
 
     output$chillPlot <- renderPlotly({
-      if( (is.null(input$startDate) | is.null(input$endDate) | is.null(input$yearInput)  ) ) {
+      if( (is.null(input$yearInput) | is.null(input$startDate) | is.null(input$endDate)  ) ) {
+        print('Ummm...')
+        cat(is.null(input$yearInput), is.null(input$startDate) , is.null(input$endDate) ,'\n')
         return(NULL)
       }
 

@@ -594,6 +594,7 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
   }
   if(debug)
     cat('Time Period (jdays):',sJDay,eJDay,'\n')
+  print(jday)
   chill <- chill[which(jday == sJDay):which(jday == eJDay)]
   JDays <- sJDay:eJDay
   nJdays <- length(JDays)
