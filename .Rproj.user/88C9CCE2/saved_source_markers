@@ -1,1 +1,1 @@
-{"active_set":"","sets":[]}
+{"active_set":"Publish Content Issues","sets":[{"base_path":"~/GitHub/ChillCalculator/","markers":[{"column":1,"line":6,"log_line":-1,"log_path":"","message":"Paths should be to files within the project directory.","path":"~/GitHub/ChillCalculator/oddbits/TestLogic.R","show_error_list":true,"type":1}],"name":"Publish Content Issues"}]}

@@ -206,7 +206,7 @@ shinyUI(
              HTML("<a href=mailto:heidi.parkes@daf.qld.gov.au?subject=Chill%20Calculator>Dr Heidi Parkes, Qld Dept. of Agriculture and Fisheries</a>"),
              helpText("For Technical issues: "),
              HTML("<a href=mailto:Neil.White@daf.qld.gov.au?subject=Chill%20Calculator>Dr Neil White, Qld Dept. of Agriculture and Fisheries</a> <br/><br/>"),
-             helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2017.")
+             helpText("© State of Queensland, Department of Agriculture and Fisheries and Horticulture Innovation Australia Ltd, 2018.")
       ),
   tabPanel("News",
            includeHTML('News.html')
