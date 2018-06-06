@@ -16,6 +16,7 @@ shinyServer(function(input, output, session) {
   growerData$weather <- data.frame(DateTime=character(),aveTemp=numeric())
   growerData$years <- as.numeric(format(Sys.Date(), "%Y"))
 
+  # read user data file ####
   output$contents <- renderTable({
 
     if(debug)
@@ -40,6 +41,7 @@ shinyServer(function(input, output, session) {
         stop(safeError(e))
       }
     )
+    userDataFirstRead <<- T
     #check for NA is localData
     if(any(is.na(localData))){
       #assume it's dangling rows
@@ -179,6 +181,7 @@ shinyServer(function(input, output, session) {
     )
   )
 
+  # output$SelectedLocation ####
   output$SelectedLocation <- renderUI({
     if(is.null(stns)){
       return(NULL)
@@ -317,24 +320,52 @@ shinyServer(function(input, output, session) {
   })
 
 
-  ### Chill Plot/ Table ###
+# Chill Plot ####
+
 
     output$chillPlot <- renderPlotly({
       if( (is.null(input$yearInput) | is.null(input$startDate) | is.null(input$endDate)  ) ) {
-        print('Ummm...')
-        cat(is.null(input$yearInput), is.null(input$startDate) , is.null(input$endDate) ,'\n')
+        if(debug){
+          print('Ummm...')
+          cat(is.null(input$yearInput), is.null(input$startDate) , is.null(input$endDate) ,'\n')
+        }
         return(NULL)
       }
-
+      startDate <- input$startDate
+      endDate <- input$endDate
       if(debug)
         cat('\n\n### Chill Plot ###\n')
       if(is.null(input$source)){
-        print('input$source was null')
+        if(debug)
+          print('input$source was null')
         source <- F
       } else {
-        print('input$source was not null')
-        cat('using',input$source,'\n')
+        if(debug){
+          print('input$source was not null')
+          cat('using',input$source,'\n')
+        }
         source <- input$source
+        if(source){
+          cat('userDataFirstRead',userDataFirstRead,'\n')
+          if(userDataFirstRead){
+            if(debug){
+              cat('User first read, set dates to data dates\n')
+              print(rbind(head(growerData$weather),rep('...',ncol(growerData$weather)),tail(growerData$weather)))
+            }
+            startDate <- as.Date(format(head(growerData$weather$dateTime,1),'%d/%m/%Y'),'%d/%m/%Y')
+            endDate <- as.Date(format(tail(growerData$weather$dateTime,1),'%d/%m/%Y'),'%d/%m/%Y')
+            userDataFirstRead <<- F
+          } else {
+            if(input$startDate < as.Date(format(head(growerData$weather$dateTime,1),'%d/%m/%Y'),'%d/%m/%Y')){
+              startDate <- as.Date(format(head(growerData$weather$dateTime,1),'%d/%m/%Y'),'%d/%m/%Y')
+            }
+            if(input$endDate > as.Date(format(tail(growerData$weather$dateTime,1),'%d/%m/%Y'),'%d/%m/%Y')){
+              endDate <- as.Date(format(tail(growerData$weather$dateTime,1),'%d/%m/%Y'),'%d/%m/%Y')
+            }
+
+            cat('Dates should be user selected',as.character(startDate),as.character(endDate),'\n')
+          }
+        }
       }
       if(source &  nrow(growerData$weather)==0 ){
         if(debug)
@@ -342,12 +373,14 @@ shinyServer(function(input, output, session) {
         showNotification("The data file is empty",closeButton = T)
         return(NULL)
       }
-      if(debug)
-        cat('args for doThePlot',input$cType,stns$row,as.character(input$startDate),as.character(input$endDate),'source=',source,'nrow',nrow(growerData$weather),'\n',sep=',')
-      doThePlot(input$cType,stns$row,input$startDate,input$endDate,source,growerData$weather)
+      if(debug){
+        cat('args for doThePlot',input$cType,stns$row,as.character(startDate),as.character(endDate),'source=',source,'nrow',nrow(growerData$weather),'\n',sep=',')
+        cat('userDataFirstRead',userDataFirstRead,'\n')
+      }
+      doThePlot(input$cType,stns$row,startDate,endDate,source,growerData$weather)
     }) #renderPlot
 
-  ### GDH Plot ###
+# GDH Plot ####
     output$GDHPlot <- renderPlotly({
 
       #print("gType and startDate...")
@@ -388,7 +421,7 @@ shinyServer(function(input, output, session) {
 
 
 
-  ### Leaflet Map ###########
+  ### Leaflet Map #######
 
 
   output$map <- renderLeaflet({

@@ -491,10 +491,12 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
   # STARTDATE<-as.Date('2018-3-1')
   # EDATE<-as.Date('2018-5-3')
   #
-  print(CHILLTYPE)
-  print(LOCATION)
-  print(STARTDATE)
-  print(EDATE)
+  if(debug){
+    print(CHILLTYPE)
+    print(LOCATION)
+    print(STARTDATE)
+    print(EDATE)
+  }
 
   if(debug & GROWER){
     print('we have grower data')
@@ -503,19 +505,6 @@ doThePlot <- function(CHILLTYPE,LOCATION,STARTDATE,EDATE,GROWER,GROWERDATA){
   if(debug & !GROWER){
     print("SILO data")
   }
-
-  # if(GROWER & !is.null(GROWERDATA)){
-  #
-  #   #we are using grower hourly data
-  #   #localData <- data.frame(dateTime=as.datetime(GROWERDATA[,1],'%d/%m/%y %H:%M'),theTemp=GROWERDATA[,2])
-  #   # STARTDATE <- head(GROWERDATA$dateTime,1)
-  #   # EDATE <- tail(GROWERDATA$dateTime,1)
-  #   if(debug){
-  #     print('Grower data')
-  #     print(head(GROWERDATA))
-  #     print(head(GROWERDATA$dateTime,1))
-  #   }
-  # }
   if(debug){
     cat('Time Period:',as.character(STARTDATE),as.character(EDATE),'\n')
   }

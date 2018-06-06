@@ -19,6 +19,8 @@ Sys.setenv(TZ="Australia/Brisbane")
 
 userLocationSet <- F
 
+userDataFirstRead <- T
+
 
 siteInfo <- readRDS('Data/SiteInfo.rds')
 gaz <- readRDS('Data/Gazetteer2010.rds')
